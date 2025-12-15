@@ -6,11 +6,17 @@ import {assertValidShape, defineShape, recordShape, unknownShape} from 'object-s
 import semver from 'semver';
 
 const repoRootDirPath = resolve(import.meta.dirname, '..', '..');
-const repoPackageJson = await readPackageJson(repoRootDirPath)
+const repoPackageJson = await readPackageJson(repoRootDirPath);
 
-const supportedPrettierRange = assertWrap.isTruthy(repoPackageJson.peerDependencies?.prettier, 'Failed to find supported Prettier version range from peer dependencies.')
+const supportedPrettierRange = assertWrap.isTruthy(
+    repoPackageJson.peerDependencies?.prettier,
+    'Failed to find supported Prettier version range from peer dependencies.',
+);
 
-const currentPrettierVersion = assertWrap.isTruthy(repoPackageJson.devDependencies?.prettier, 'Failed to find current Prettier version from dev dependencies.')
+const currentPrettierVersion = assertWrap.isTruthy(
+    repoPackageJson.devDependencies?.prettier,
+    'Failed to find current Prettier version from dev dependencies.',
+);
 
 async function fetchPrettierV3MinorVersions(): Promise<string[]> {
     const response = await fetch('https://registry.npmjs.org/prettier');
@@ -36,12 +42,7 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
 
     const mappedLatestMinorVersions = rawVersions.reduce(
         (latestMinorVersions, version) => {
-            if (
-                !semver.satisfies(
-                    version,
-                    supportedPrettierRange,
-                )
-            ) {
+            if (!semver.satisfies(version, supportedPrettierRange)) {
                 return latestMinorVersions;
             }
 

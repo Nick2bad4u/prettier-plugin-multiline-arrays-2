@@ -1,6 +1,6 @@
 {
     "name": "prettier-plugin-multiline-arrays",
-    "version": "4.1.0",
+    "version": "4.1.1",
     "description": "Prettier plugin to force all arrays to be multiline.",
     "keywords": [
         "array",
@@ -34,7 +34,7 @@
         "lint": "virmator lint fix",
         "publish": "virmator publish npm run test:all",
         "test": "test-as-package virmator test node",
-        "test:all": "npm run compile && npm test:versions && runstorm --names spelling,format,deps,lint \"npm run test:spelling\" \"npm run test:format\" \"npm run test:deps\" \"npm run test:lint\"",
+        "test:all": "npm run compile && npm run test:versions && runstorm --names spelling,format,deps,lint \"npm run test:spelling\" \"npm run test:format\" \"npm run test:deps\" \"npm run test:lint\"",
         "test:deps": "virmator deps check",
         "test:docs": "virmator docs check",
         "test:format": "virmator format check --no-deps",

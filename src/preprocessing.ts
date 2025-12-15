@@ -150,9 +150,13 @@ export function wrapParser(originalParser: Parser, parserName: string) {
 
     parserProxy.proxyModifier.addOverrideTarget({
         /**
-         * `as` cast needed because our current Prettier version doesn't support async preprocess but Prettier v3.7 does.
+         * `as` cast needed because our current Prettier version doesn't support async preprocess
+         * but Prettier v3.7 does.
          */
-        preprocess: multilineArraysPluginPreprocess as (text: string, options: ActualParserOptions) => string,
+        preprocess: multilineArraysPluginPreprocess as (
+            text: string,
+            options: ActualParserOptions,
+        ) => string,
     });
 
     return parserProxy.proxy;
