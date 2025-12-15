@@ -32,5 +32,6 @@ jobs:
               shell: bash
               run: |
                   npm ci
+                  npm run compile
                   npm run format package.json
                   npm run test:all
