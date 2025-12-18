@@ -1,10 +1,10 @@
-import {check, checkWrap} from '@augment-vir/assert';
-import {type MaybePromise, stringify} from '@augment-vir/common';
+import {stringify} from '@augment-vir/common';
 import {type Parser, type ParserOptions, type Plugin, type Printer} from 'prettier';
 import {createWrappedMultiTargetProxy} from 'proxy-vir';
 import {type SetOptional} from 'type-fest';
-import {envDebugKey} from './options.js';
 import {pluginMarker} from './plugin-marker.js';
+import {multilineArrayPrinter} from './printer/multiline-array-printer.js';
+import {setOriginalPrinter} from './printer/original-printer.js';
 
 /** Prettier's type definitions are not true. */
 type ActualParserOptions = SetOptional<ParserOptions, 'plugins'> &
@@ -14,52 +14,49 @@ type ActualParserOptions = SetOptional<ParserOptions, 'plugins'> &
     }>;
 
 function addMultilinePrinter(options: ActualParserOptions): void {
-    const astFormat = options.astFormat;
-    if (!astFormat) {
-        throw new Error(`Could not find astFormat while adding printer.`);
-    }
+    if ('printer' in options) {
+        setOriginalPrinter(options.printer);
+        /** Overwrite the printer with ours. */
+        options.printer = multilineArrayPrinter;
+    } else {
+        const astFormat = options.astFormat;
+        if (!astFormat) {
+            throw new Error(`Could not find astFormat while adding printer.`);
+        }
+        /**
+         * If the printer hasn't already been assigned in options, rearrange plugins so that ours
+         * gets chosen.
+         */
+        const plugins = options.plugins ?? [];
+        const firstMatchedPlugin = plugins.find(
+            (plugin): plugin is Plugin =>
+                typeof plugin !== 'string' &&
+                !(plugin instanceof URL) &&
+                !!plugin.printers &&
+                !!plugin.printers[astFormat],
+        );
+        if (!firstMatchedPlugin || typeof firstMatchedPlugin === 'string') {
+            throw new Error(`Matched invalid first plugin: ${firstMatchedPlugin}`);
+        }
+        const matchedPrinter = firstMatchedPlugin.printers?.[astFormat];
+        if (!matchedPrinter) {
+            throw new Error(
+                `Printer not found on matched plugin: ${stringify(firstMatchedPlugin)}`,
+            );
+        }
+        setOriginalPrinter(matchedPrinter);
+        const thisPluginIndex = plugins.findIndex((plugin) => {
+            return (plugin as {pluginMarker: any}).pluginMarker === pluginMarker;
+        });
+        const thisPlugin = plugins[thisPluginIndex];
+        if (!thisPlugin) {
+            throw new Error(`This plugin was not found.`);
+        }
 
-    /**
-     * Ensure this plugin appears before any other plugin that also provides a printer for the
-     * current astFormat. This makes Prettier pick our printers when resolving the printer plugin,
-     * while still letting Prettier fully normalize the printer object (including getVisitorKeys and
-     * embed front‑matter support).
-     */
-    const plugins = options.plugins ?? [];
-    const thisPluginIndex = plugins.findIndex((plugin) => {
-        return checkWrap.isObject(plugin)?.pluginMarker === pluginMarker;
-    });
-
-    const firstMatchedPlugin = plugins.find(
-        (plugin, index): plugin is Plugin =>
-            index !== thisPluginIndex &&
-            typeof plugin !== 'string' &&
-            !(plugin instanceof URL) &&
-            !!plugin.printers &&
-            !!plugin.printers[astFormat],
-    );
-    if (!firstMatchedPlugin || typeof firstMatchedPlugin === 'string') {
-        throw new Error(`Matched invalid first plugin: ${firstMatchedPlugin}`);
+        /** Add this plugin to the beginning of the array so its printer is found first. */
+        plugins.splice(thisPluginIndex, 1);
+        plugins.splice(0, 0, thisPlugin);
     }
-    const matchedPrinter = firstMatchedPlugin.printers?.[astFormat];
-    if (!matchedPrinter) {
-        throw new Error(`Printer not found on matched plugin: ${stringify(firstMatchedPlugin)}`);
-    }
-
-    const thisPlugin = plugins[thisPluginIndex];
-    if (!thisPlugin) {
-        throw new Error(`This plugin was not found.`);
-    }
-
-    if (thisPluginIndex <= 0) {
-        /** Already the first plugin; nothing else to do. */
-        return;
-    }
-
-    /** Remove this plugin from its current location in the array. */
-    plugins.splice(thisPluginIndex, 1);
-    /** Add this plugin to the beginning of the array so its printer is found first. */
-    plugins.splice(0, 0, thisPlugin);
 }
 
 function findPluginsByParserName(parserName: string, plugins: (Plugin | URL | string)[]): Plugin[] {
@@ -78,10 +75,6 @@ export function wrapParser(originalParser: Parser, parserName: string) {
     const parserProxy = createWrappedMultiTargetProxy<Parser>({
         initialTarget: originalParser,
     });
-
-    if (process.env[envDebugKey]) {
-        console.info('[multiline-arrays] wrapParser active for parser:', parserName);
-    }
 
     function multilineArraysPluginPreprocess(text: string, options: ActualParserOptions) {
         const pluginsFromOptions = options.plugins ?? [];
@@ -104,10 +97,6 @@ export function wrapParser(originalParser: Parser, parserName: string) {
 
         let processedText = text;
 
-        const receivedPromise = false as boolean;
-
-        const nextTexts: MaybePromise<string | undefined>[] = [];
-
         pluginsWithPreprocessor.forEach((pluginWithPreprocessor) => {
             const nextText = pluginWithPreprocessor.parsers?.[parserName]?.preprocess?.(
                 processedText,
@@ -118,45 +107,18 @@ export function wrapParser(originalParser: Parser, parserName: string) {
                     ),
                 },
             );
-            nextTexts.push(nextText);
-            if (check.isPromiseLike(nextText)) {
-                nextTexts.push(nextText);
+            if (nextText != undefined) {
+                processedText = nextText;
             }
         });
 
-        if (receivedPromise) {
-            // eslint-disable-next-line @typescript-eslint/await-thenable
-            return Promise.all(nextTexts).then((awaitedNextTexts) => {
-                awaitedNextTexts.forEach((nextText) => {
-                    if (nextText != undefined) {
-                        processedText = nextText;
-                    }
-                });
-                addMultilinePrinter(options);
+        addMultilinePrinter(options);
 
-                return processedText;
-            });
-        } else {
-            nextTexts.forEach((nextText) => {
-                if (nextText != undefined) {
-                    processedText = nextText as string;
-                }
-            });
-            addMultilinePrinter(options);
-
-            return processedText;
-        }
+        return processedText;
     }
 
     parserProxy.proxyModifier.addOverrideTarget({
-        /**
-         * `as` cast needed because our current Prettier version doesn't support async preprocess
-         * but Prettier v3.7 does.
-         */
-        preprocess: multilineArraysPluginPreprocess as (
-            text: string,
-            options: ActualParserOptions,
-        ) => string,
+        preprocess: multilineArraysPluginPreprocess,
     });
 
     return parserProxy.proxy;

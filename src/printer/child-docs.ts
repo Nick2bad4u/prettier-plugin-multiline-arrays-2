@@ -17,7 +17,7 @@ export function walkDoc(
         index: number | undefined,
     ) => boolean | void | undefined,
     parents: Parents[] = [],
-    index: number | undefined = undefined,
+    index?: number | undefined,
 ): boolean {
     if (!startDoc) {
         return true;

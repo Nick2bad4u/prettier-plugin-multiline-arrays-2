@@ -72,44 +72,45 @@ async function runPrettierTests() {
 
     log.info(`Testing with prettier versions:\n${indent(prettierVersions.join('\n'))}`);
 
-    const versionPasses = await awaitedBlockingMap(prettierVersions, async (
-        version,
-    ): Promise<{version: string; success: boolean}> => {
-        log.info(`\n\n>>>>>>>>>> Prettier v${version}\n`);
+    const versionPasses = await awaitedBlockingMap(
+        prettierVersions,
+        async (version): Promise<{version: string; success: boolean}> => {
+            log.info(`\n\n>>>>>>>>>> Prettier v${version}\n`);
 
-        try {
-            log.faint(`Installing Prettier v${version}...`);
-            await runShellCommand(`npm i -D --no-save prettier@${version}`, {
-                cwd: repoRootDirPath,
-                rejectOnError: true,
-            });
-        } catch (error) {
-            log.faint(error);
-            log.error(`Failed to install Prettier v${version}.`);
-            return {
-                version,
-                success: false,
-            };
-        }
-        log.faint('Running tests for Prettier v${version}...');
-        try {
-            await runShellCommand('npm test', {
-                cwd: repoRootDirPath,
-                rejectOnError: true,
-                hookUpToConsole: true,
-            });
+            try {
+                log.faint(`Installing Prettier v${version}...`);
+                await runShellCommand(`npm i -D --no-save prettier@${version}`, {
+                    cwd: repoRootDirPath,
+                    rejectOnError: true,
+                });
+            } catch (error) {
+                log.faint(error);
+                log.error(`Failed to install Prettier v${version}.`);
+                return {
+                    version,
+                    success: false,
+                };
+            }
+            log.faint('Running tests for Prettier v${version}...');
+            try {
+                await runShellCommand('npm test', {
+                    cwd: repoRootDirPath,
+                    rejectOnError: true,
+                    hookUpToConsole: true,
+                });
 
-            return {
-                version,
-                success: true,
-            };
-        } catch {
-            return {
-                version,
-                success: false,
-            };
-        }
-    });
+                return {
+                    version,
+                    success: true,
+                };
+            } catch {
+                return {
+                    version,
+                    success: false,
+                };
+            }
+        },
+    );
 
     log.faint(`Restoring Prettier v${currentPrettierVersion}...\n\n`);
     await runShellCommand(`npm i -D --no-save prettier@${currentPrettierVersion}`, {

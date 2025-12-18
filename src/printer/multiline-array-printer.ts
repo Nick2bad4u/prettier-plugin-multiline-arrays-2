@@ -18,14 +18,32 @@ const debug = !!process.env[envDebugKey];
 function createMultilineArrayPrinter(basePrinter: Printer<Node>): Printer<Node> {
     return {
         ...basePrinter,
-        print(path: AstPath<Node>, options: ParserOptions, print: (path: AstPath<Node>) => Doc) {
+        /**
+         * The 4th parameter `args` is used by Prettier internally. We must declare it to preserve
+         * the function's arity (Function.length), which Prettier checks to determine behavior.
+         * Without this 4th parameter, Prettier's internal printing logic behaves differently,
+         * causing incorrect output for non-array code (like function calls).
+         */
+        print(
+            path: AstPath<Node>,
+            options: ParserOptions,
+            print: (path: AstPath<Node>) => Doc,
+            args?: unknown,
+        ) {
             if (debug) {
                 console.info(
                     '[multiline-arrays] multilineArrayPrinter.print for node:',
                     path.getNode()?.type,
                 );
             }
-            const originalOutput = basePrinter.print(path, options, print);
+            const originalOutput = (
+                basePrinter.print as (
+                    path: AstPath<Node>,
+                    options: ParserOptions,
+                    print: (path: AstPath<Node>) => Doc,
+                    args?: unknown,
+                ) => Doc
+            )(path, options, print, args);
 
             if (
                 (options.filepath as string | undefined)?.endsWith('package.json') &&
@@ -48,20 +66,3 @@ function createMultilineArrayPrinter(basePrinter: Printer<Node>): Printer<Node> 
 export const multilineArrayPrinter: Printer<Node> = createMultilineArrayPrinter(
     assertWrap.isDefined(estreePlugin.printers.estree, 'No ESTree printer found.'),
 );
-
-export const multilineJsonPrinter: Printer<Node> = createMultilineArrayPrinter(
-    assertWrap.isDefined(estreePlugin.printers['estree-json'], 'No ESTree JSON printer found.'),
-);
-/**
- * Patch Prettier's built-in estree printers in-place so that any code path using the estree plugin
- * (including Prettier's own internal plugin resolution) will go through our multiline wrappers. We
- * capture the original printers above, so the wrappers still delegate to the unmodified
- * implementations when computing the base Doc.
- *
- * Note: this mutation happens when this module is imported. In normal Prettier usage, plugins are
- * loaded before printers are resolved, so all estree-based printing should go through these
- * wrappers. If some other code caches the original printers _before_ this plugin is loaded, those
- * cached references would bypass the multiline behavior.
- */
-estreePlugin.printers.estree = multilineArrayPrinter;
-estreePlugin.printers['estree-json'] = multilineJsonPrinter;

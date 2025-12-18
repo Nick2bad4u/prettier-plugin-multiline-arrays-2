@@ -15,7 +15,8 @@ const prettierConfig = {
     plugins: basePrettierConfig.plugins.map((plugin) =>
         plugin === 'prettier-plugin-multiline-arrays'
             ? new URL('./dist/index.js', import.meta.url).href
-            : plugin),
+            : plugin,
+    ),
     multilineArraysWrapThreshold: -1,
 };
 
