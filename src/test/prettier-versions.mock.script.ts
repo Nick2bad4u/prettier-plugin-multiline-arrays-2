@@ -1,4 +1,4 @@
-import {assertWrap} from '@augment-vir/assert';
+import {assert, assertWrap} from '@augment-vir/assert';
 import {awaitedBlockingMap, indent, log, logColors} from '@augment-vir/common';
 import {readPackageJson, runShellCommand} from '@augment-vir/node';
 import {resolve} from 'node:path';
@@ -83,6 +83,10 @@ async function runPrettierTests() {
                     cwd: repoRootDirPath,
                     rejectOnError: true,
                 });
+                const {stdout} =await runShellCommand('npm ls prettier', {
+                    cwd: repoRootDirPath,
+                });
+                assert.hasValue(stdout, `└── prettier@${version}`, `Prettier v${version} was not installed.`)
             } catch (error) {
                 log.faint(error);
                 log.error(`Failed to install Prettier v${version}.`);
@@ -91,7 +95,7 @@ async function runPrettierTests() {
                     success: false,
                 };
             }
-            log.faint('Running tests for Prettier v${version}...');
+            log.faint(`Running tests for Prettier v${version}...`);
             try {
                 await runShellCommand('npm test', {
                     cwd: repoRootDirPath,
