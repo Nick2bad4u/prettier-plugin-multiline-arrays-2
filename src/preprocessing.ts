@@ -3,7 +3,7 @@ import {type Parser, type ParserOptions, type Plugin, type Printer} from 'pretti
 import {createWrappedMultiTargetProxy} from 'proxy-vir';
 import {type SetOptional} from 'type-fest';
 import {pluginMarker} from './plugin-marker.js';
-import {multilineArrayPrinter} from './printer/multiline-array-printer.js';
+import {createMultilineArrayPrinter} from './printer/multiline-array-printer.js';
 import {setOriginalPrinter} from './printer/original-printer.js';
 
 /** Prettier's type definitions are not true. */
@@ -17,7 +17,7 @@ function addMultilinePrinter(options: ActualParserOptions): void {
     if ('printer' in options) {
         setOriginalPrinter(options.printer);
         /** Overwrite the printer with ours. */
-        options.printer = multilineArrayPrinter;
+        options.printer = createMultilineArrayPrinter(options.printer);
     } else {
         const astFormat = options.astFormat;
         if (!astFormat) {

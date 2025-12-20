@@ -15,7 +15,7 @@ const estreePlugin = estreePluginModule as unknown as {
 
 const debug = !!process.env[envDebugKey];
 
-function createMultilineArrayPrinter(basePrinter: Printer<Node>): Printer<Node> {
+export function createMultilineArrayPrinter(basePrinter: Printer<Node>): Printer<Node> {
     return {
         ...basePrinter,
         /**

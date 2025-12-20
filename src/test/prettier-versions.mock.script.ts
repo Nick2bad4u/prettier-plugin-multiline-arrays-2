@@ -83,10 +83,14 @@ async function runPrettierTests() {
                     cwd: repoRootDirPath,
                     rejectOnError: true,
                 });
-                const {stdout} =await runShellCommand('npm ls prettier', {
+                const {stdout} = await runShellCommand('npm ls prettier', {
                     cwd: repoRootDirPath,
                 });
-                assert.hasValue(stdout, `└── prettier@${version}`, `Prettier v${version} was not installed.`)
+                assert.hasValue(
+                    stdout,
+                    `└── prettier@${version}`,
+                    `Prettier v${version} was not installed.`,
+                );
             } catch (error) {
                 log.faint(error);
                 log.error(`Failed to install Prettier v${version}.`);
