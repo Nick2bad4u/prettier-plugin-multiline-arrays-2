@@ -9,7 +9,7 @@ import {
     parseNextLineCounts,
 } from './comment-triggers.js';
 import {containsLeadingNewline} from './leading-new-line.js';
-import {isArrayLikeNode} from './supported-node-types.js';
+import {getArrayLikeElements, isArrayLikeNode} from './supported-node-types.js';
 import {containsTrailingComma} from './trailing-comma.js';
 
 const nestingSyntaxOpen = '[{(`';
@@ -24,10 +24,21 @@ function insertLinesIntoArray(
     wrapThreshold: number,
     debug: boolean,
 ): Doc {
+    /**
+     * Each call to `insertLinesIntoArray` corresponds to a single array-like AST node, but its Doc
+     * can contain additional `[` characters that belong to sibling nodes (for example, the tuple
+     * type annotation on a destructuring pattern). Only the first `[` is our own array; skip the
+     * rest so we don't rewrite unrelated brackets.
+     */
+    let hasProcessedOwnArray = false;
+
     walkDoc(inputDoc, debug, (currentDoc, parentDocs, childIndex): boolean => {
         const currentParent = parentDocs[0];
         const parentDoc = currentParent?.parent;
         if (typeof currentDoc === 'string' && currentDoc.trim() === '[') {
+            if (hasProcessedOwnArray) {
+                return true;
+            }
             const undoMutations: (() => void)[] = [];
 
             let finalLineBreakExists = false as boolean;
@@ -203,6 +214,20 @@ function insertLinesIntoArray(
                                     innerParentDoc: innerCurrentParentDoc,
                                 });
                                 throw new Error(`Found string but innerParentDoc is not defined.`);
+                            } else if (
+                                currentDoc === '<' &&
+                                Array.isArray(innerCurrentParentDoc) &&
+                                commaChildIndex != undefined &&
+                                innerCurrentParentDoc.slice(commaChildIndex + 1).includes('>')
+                            ) {
+                                /**
+                                 * A paired `<...>` in the same Doc array is a generic type-argument
+                                 * group (e.g. `Omit<MyType, 'field'>`). Skip walking its siblings
+                                 * so commas inside the generic aren't mistaken for array-element
+                                 * separators. A lone `<` or `>` without a match in the same array
+                                 * is a comparison operator and handled by the default walk.
+                                 */
+                                return false;
                             } else if (currentDoc && nestingSyntaxOpen.includes(currentDoc)) {
                                 if (!Array.isArray(innerCurrentParentDoc)) {
                                     throw new TypeError(
@@ -479,6 +504,8 @@ function insertLinesIntoArray(
                 undoAllMutations();
             }
 
+            hasProcessedOwnArray = true;
+
             // don't walk any deeper
             return false;
         } else if (debug) {
@@ -556,15 +583,33 @@ export function printWithMultilineArrays(
         const originalText: string = inputOptions.originalText;
         const splitOriginalText: string[] = originalText.split('\n');
 
+        /**
+         * ArrayPattern nodes in Babel-TS include their `typeAnnotation` in the node's `loc`, so the
+         * node's end location can be well past the array's `]`. Use the typeAnnotation's start
+         * (when present) as the effective end so trailing-comma / leading-newline detection only
+         * inspects text inside the actual array brackets.
+         */
+        const typeAnnotationStart = (
+            node as {typeAnnotation?: {loc?: {start: {line: number; column: number}}}}
+        ).typeAnnotation?.loc?.start;
+        const arrayLoc = typeAnnotationStart
+            ? {
+                  start: node.loc.start,
+                  end: typeAnnotationStart,
+              }
+            : node.loc;
+
+        const elements = getArrayLikeElements(node);
+
         const includesLeadingNewline = containsLeadingNewline(
-            node.loc,
-            node.elements,
+            arrayLoc,
+            elements,
             splitOriginalText,
             debug,
         );
         const includesTrailingComma = containsTrailingComma(
-            node.loc,
-            node.elements,
+            arrayLoc,
+            elements,
             splitOriginalText,
             debug,
         );

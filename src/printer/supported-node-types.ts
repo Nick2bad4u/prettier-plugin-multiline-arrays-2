@@ -1,18 +1,27 @@
-import {type ArrayExpression, type ArrayPattern, type Node} from 'estree';
+import {type ArrayExpression, type ArrayPattern, type BaseNode, type Node} from 'estree';
 
-export type ArrayLikeNode = ArrayExpression | ArrayPattern;
+type TSTupleType = BaseNode & {
+    type: 'TSTupleType';
+    elementTypes: (BaseNode | null)[];
+};
 
-const arrayLikeNodeTypes = ((
-    // maintain types with input strictness
-    input: ArrayLikeNode['type'][],
-): // but return as string for easy comparison with other node type strings
-string[] => input)([
+export type ArrayLikeNode = ArrayExpression | ArrayPattern | TSTupleType;
+
+const arrayLikeNodeTypes: string[] = [
     'ArrayExpression',
     'ArrayPattern',
     // this expression type isn't accounted for in the types, but I saw it used in another plugin
-    'TupleExpression' as any,
-]);
+    'TupleExpression',
+    'TSTupleType',
+];
 
-export function isArrayLikeNode(node: Node): node is ArrayLikeNode {
+export function isArrayLikeNode(node: Node): boolean {
     return arrayLikeNodeTypes.includes(node.type);
+}
+
+export function getArrayLikeElements(node: ArrayLikeNode): (BaseNode | null)[] {
+    if (node.type === 'TSTupleType') {
+        return node.elementTypes;
+    }
+    return node.elements;
 }

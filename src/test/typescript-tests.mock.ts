@@ -1456,6 +1456,9 @@ export const typescriptTests: MultilineArrayTest[] = [
                 ([key, value]: [string, unknown]) => console.log(key, value),
             );
         `,
+        expect: `
+            Object.entries(someObject).some(([key, value]: [string, unknown]) => console.log(key, value));
+        `,
     },
     {
         it: 'original parser with single line object assignment',
