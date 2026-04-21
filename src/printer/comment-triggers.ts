@@ -45,7 +45,9 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
     // parse comments only on the root node so it only happens once
     const comments: Comment[] = extractComments(rootNode);
     if (debug) {
-        console.info({comments});
+        console.info({
+            comments,
+        });
     }
 
     const starterTriggers: InternalCommentTriggers = {
@@ -104,7 +106,9 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
 
     setResets(internalCommentTriggers);
 
-    const commentTriggers = {...internalCommentTriggers};
+    const commentTriggers = {
+        ...internalCommentTriggers,
+    };
     delete (commentTriggers as Partial<InternalCommentTriggers>).resets;
 
     // save to a map so we don't have to recalculate these every time
@@ -192,7 +196,11 @@ export function parseNextLineCounts(input: string, nextOnly: boolean, debug: boo
     );
 
     const invalidNumbers = numbers
-        .map((entry, index) => ({index, entry, original: split[index]}))
+        .map((entry, index) => ({
+            index,
+            entry,
+            original: split[index],
+        }))
         .filter((entry) => {
             return isNaN(entry.entry);
         });

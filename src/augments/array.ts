@@ -9,8 +9,7 @@ export function extractTextBetweenRanges(
         throw new Error(
             `Start line "${range.start.line}" cannot be greater than end line "${range.end.line}"`,
         );
-    }
-    if (range.start.line === range.end.line) {
+    } else if (range.start.line === range.end.line) {
         if (range.start.column >= range.end.column) {
             throw new Error(
                 `When start and end are on the same line, the start column "${range.start.column}" must be less than the end column "${range.end.column}".`,

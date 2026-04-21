@@ -40,13 +40,19 @@ function insertLinesIntoArray(
 
             if (!Array.isArray(parentDoc)) {
                 if (debug) {
-                    console.error({brokenParent: parentDoc, currentDoc});
+                    console.error({
+                        brokenParent: parentDoc,
+                        currentDoc,
+                    });
                 }
                 throw new Error(`${found} parentDoc is not an array.`);
             }
 
             if (debug) {
-                console.info({currentDoc, parentDoc});
+                console.info({
+                    currentDoc,
+                    parentDoc,
+                });
                 console.info(stringify(parentDoc));
             }
             if (childIndex !== 0) {
@@ -72,24 +78,26 @@ function insertLinesIntoArray(
             const bracketSibling =
                 parentDoc[indentIndex] === '' ? parentDoc[indentIndex + 1] : parentDoc[indentIndex];
             if (debug) {
-                console.info({bracketSibling});
+                console.info({
+                    bracketSibling,
+                });
             }
             if (bracketSibling === ']') {
                 return false;
-            }
-            if (!isDocCommand(bracketSibling) || bracketSibling.type !== 'indent') {
+            } else if (!isDocCommand(bracketSibling) || bracketSibling.type !== 'indent') {
                 throw new Error(
                     `${found} its sibling was not an indent Doc.: ${stringify(bracketSibling)}`,
                 );
             }
             const indentContents = bracketSibling.contents;
             if (debug) {
-                console.info({indentContents});
+                console.info({
+                    indentContents,
+                });
             }
             if (!Array.isArray(indentContents)) {
                 throw new TypeError(`${found} indent didn't have array contents.`);
-            }
-            if (indentContents.length < 2) {
+            } else if (indentContents.length < 2) {
                 if (debug) {
                     console.error(stringify(indentContents));
                 }
@@ -98,7 +106,9 @@ function insertLinesIntoArray(
 
             const startingLine = indentContents[0];
             if (debug) {
-                console.info({firstIndentContentsChild: startingLine});
+                console.info({
+                    firstIndentContentsChild: startingLine,
+                });
             }
             if (!isDocCommand(startingLine) || startingLine.type !== 'line') {
                 if (Array.isArray(startingLine)) {
@@ -127,9 +137,7 @@ function insertLinesIntoArray(
                     indentedContent,
                 });
                 throw new Error(`${found} second indent child is not a fill.`);
-            }
-
-            if (
+            } else if (
                 !Array.isArray(indentedContent) &&
                 !(isDocCommand(indentedContent) && indentedContent.type === 'fill')
             ) {
@@ -138,9 +146,7 @@ function insertLinesIntoArray(
                     indentCode: indentedContent,
                 });
                 throw new Error(`${found} second indent child is not a fill doc or an array.`);
-            }
-
-            if (
+            } else if (
                 Array.isArray(indentedContent)
                     ? indentedContent.length === 0
                     : indentedContent.parts.length === 0
@@ -176,11 +182,9 @@ function insertLinesIntoArray(
                             finalLineBreakExists = true;
                             if (!innerCurrentParentDoc) {
                                 throw new Error(`Found if-break without a parent`);
-                            }
-                            if (!Array.isArray(innerCurrentParentDoc)) {
+                            } else if (!Array.isArray(innerCurrentParentDoc)) {
                                 throw new TypeError(`if-break parent is not an array`);
-                            }
-                            if (commaChildIndex == undefined) {
+                            } else if (commaChildIndex == undefined) {
                                 throw new Error(`if-break child index is undefined`);
                             }
                             innerCurrentParentDoc[commaChildIndex] = currentDoc.breakContents;
@@ -195,10 +199,11 @@ function insertLinesIntoArray(
                             });
                         } else if (typeof currentDoc === 'string') {
                             if (!innerCurrentParentDoc) {
-                                console.error({innerParentDoc: innerCurrentParentDoc});
+                                console.error({
+                                    innerParentDoc: innerCurrentParentDoc,
+                                });
                                 throw new Error(`Found string but innerParentDoc is not defined.`);
-                            }
-                            if (currentDoc && nestingSyntaxOpen.includes(currentDoc)) {
+                            } else if (currentDoc && nestingSyntaxOpen.includes(currentDoc)) {
                                 if (!Array.isArray(innerCurrentParentDoc)) {
                                     throw new TypeError(
                                         `Found opening syntax but parent is not an array.`,
@@ -219,7 +224,10 @@ function insertLinesIntoArray(
                                 if (innerCurrentParentDoc[closingIndex] !== ']') {
                                     const closingSibling = innerCurrentParentDoc[closingIndex - 1];
                                     if (debug) {
-                                        console.info({closingIndex, closingSibling});
+                                        console.info({
+                                            closingIndex,
+                                            closingSibling,
+                                        });
                                     }
                                     if (
                                         closingSibling &&
@@ -241,15 +249,18 @@ function insertLinesIntoArray(
                                 throw new Error(`Found closing syntax which shouldn't be walked`);
                             } else if (currentDoc === ',') {
                                 if (debug) {
-                                    console.info({foundCommaIn: innerCurrentParentDoc});
+                                    console.info({
+                                        foundCommaIn: innerCurrentParentDoc,
+                                    });
                                 }
                                 if (!Array.isArray(innerCurrentParentDoc)) {
-                                    console.error({innerParentDoc: innerCurrentParentDoc});
+                                    console.error({
+                                        innerParentDoc: innerCurrentParentDoc,
+                                    });
                                     throw new Error(
                                         `Found comma but innerParentDoc is not an array.`,
                                     );
-                                }
-                                if (commaChildIndex == undefined) {
+                                } else if (commaChildIndex == undefined) {
                                     throw new Error(`Found comma but childIndex is undefined.`);
                                 }
 
@@ -261,13 +272,13 @@ function insertLinesIntoArray(
                                         throw new Error(
                                             `Could not find grandparent of comma group.`,
                                         );
-                                    }
-                                    if (commaGrandParent.childIndexInThisParent == undefined) {
+                                    } else if (
+                                        commaGrandParent.childIndexInThisParent == undefined
+                                    ) {
                                         throw new Error(
                                             `Could not find index of comma group parent`,
                                         );
-                                    }
-                                    if (!Array.isArray(commaGrandParent.parent)) {
+                                    } else if (!Array.isArray(commaGrandParent.parent)) {
                                         throw new TypeError(
                                             `Comma group grandparent is not an array.`,
                                         );
@@ -289,7 +300,10 @@ function insertLinesIntoArray(
                                 if (debug) {
                                     console.info(
                                         `Trying to find comma sibling at index ${siblingIndex}`,
-                                        stringify({parentToMutate, maybeCommaSibling}),
+                                        stringify({
+                                            parentToMutate,
+                                            maybeCommaSibling,
+                                        }),
                                     );
                                 }
 
@@ -371,7 +385,10 @@ function insertLinesIntoArray(
                             const secondPart = currentDoc[1];
                             if (debug) {
                                 console.info('got concat child doc');
-                                console.info(currentDoc, {firstPart, secondPart});
+                                console.info(currentDoc, {
+                                    firstPart,
+                                    secondPart,
+                                });
                                 console.info(
                                     isDocCommand(firstPart),
                                     isDocCommand(secondPart),
@@ -465,7 +482,9 @@ function insertLinesIntoArray(
             // don't walk any deeper
             return false;
         } else if (debug) {
-            console.info({ignoring: currentDoc});
+            console.info({
+                ignoring: currentDoc,
+            });
         }
 
         return true;
@@ -578,7 +597,12 @@ export function printWithMultilineArrays(
 
         if (debug) {
             console.info(`======= Starting call to ${insertLinesIntoArray.name}: =======`);
-            console.info({options: {lineCounts, wrapThreshold}});
+            console.info({
+                options: {
+                    lineCounts,
+                    wrapThreshold,
+                },
+            });
         }
 
         const manualWrap = includesCommentTrigger

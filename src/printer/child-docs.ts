@@ -39,8 +39,7 @@ export function walkDoc(
     if (!callback(startDoc, parents, index)) {
         // if the callback returns something falsy, don't try to walk its children
         return false;
-    }
-    if (typeof startDoc === 'string') {
+    } else if (typeof startDoc === 'string') {
         return true;
     } else if (Array.isArray(startDoc)) {
         if (debug) {
@@ -53,7 +52,10 @@ export function walkDoc(
                 debug,
                 callback,
                 [
-                    {parent: startDoc, childIndexInThisParent: index},
+                    {
+                        parent: startDoc,
+                        childIndexInThisParent: index,
+                    },
                     ...parents,
                 ],
                 index,
@@ -68,7 +70,10 @@ export function walkDoc(
             debug,
             callback,
             [
-                {parent: startDoc, childIndexInThisParent: undefined},
+                {
+                    parent: startDoc,
+                    childIndexInThisParent: undefined,
+                },
                 ...parents,
             ],
             undefined,
@@ -82,7 +87,10 @@ export function walkDoc(
             debug,
             callback,
             [
-                {parent: startDoc, childIndexInThisParent: undefined},
+                {
+                    parent: startDoc,
+                    childIndexInThisParent: undefined,
+                },
                 ...parents,
             ],
             undefined,

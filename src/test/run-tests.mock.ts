@@ -19,7 +19,11 @@ async function runPrettierFormat(
         filepath: `blah.${extension}`,
         ...repoConfig,
         ...options,
-        ...(parser ? {parser} : {}),
+        ...(parser
+            ? {
+                  parser,
+              }
+            : {}),
     };
 
     return await prettierFormat(code, prettierOptions);
@@ -71,7 +75,9 @@ export function runTests(extension: string, tests: MultilineArrayTest[], parser:
                 if (test.failureMessage && error instanceof Error) {
                     const strippedMessage = removeColor(error.message);
                     if (test.failureMessage !== strippedMessage) {
-                        console.info({strippedMessage});
+                        console.info({
+                            strippedMessage,
+                        });
                     }
                     assert.strictEquals(removeColor(strippedMessage), test.failureMessage);
                 } else {
