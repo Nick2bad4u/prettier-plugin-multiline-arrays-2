@@ -1442,6 +1442,22 @@ export const typescriptTests: MultilineArrayTest[] = [
         },
     },
     {
+        it: 'does not wrap generic type arguments inside an array element GitHub Issue #69',
+        code: `
+            const array = [
+                x as Omit<MyType, 'field'>,
+            ];
+        `,
+    },
+    {
+        it: 'does not wrap destructuring patterns or tuple type annotations GitHub Issue #69',
+        code: `
+            Object.entries(someObject).some(
+                ([key, value]: [string, unknown]) => console.log(key, value),
+            );
+        `,
+    },
+    {
         it: 'original parser with single line object assignment',
         code: `
             const myVar: object = {a: 'where', b: 'everywhere'};
