@@ -245,30 +245,6 @@ function insertLinesIntoArray(
                                         `Could not find closing match for ${currentDoc}`,
                                     );
                                 }
-                                // check that there's a line break before the ending of the array
-                                if (innerCurrentParentDoc[closingIndex] !== ']') {
-                                    const closingSibling = innerCurrentParentDoc[closingIndex - 1];
-                                    if (debug) {
-                                        console.info({
-                                            closingIndex,
-                                            closingSibling,
-                                        });
-                                    }
-                                    if (
-                                        closingSibling &&
-                                        typeof closingSibling === 'object' &&
-                                        !Array.isArray(closingSibling) &&
-                                        closingSibling.type === 'line' &&
-                                        !closingSibling.soft
-                                    ) {
-                                        if (debug) {
-                                            console.info(
-                                                `found final line break inside of closing sibling`,
-                                            );
-                                        }
-                                        finalLineBreakExists = true;
-                                    }
-                                }
                                 return false;
                             } else if (currentDoc && nestingSyntaxClose.includes(currentDoc)) {
                                 throw new Error(`Found closing syntax which shouldn't be walked`);
