@@ -367,6 +367,22 @@ const jsonTests: MultilineArrayTest[] = [
             }
         `,
     },
+    {
+        it: 'keeps closing bracket on its own line for array of objects with bracketSpacing GitHub Issue #70',
+        code: `
+            {
+                "test": [
+                    { "foo": 1 },
+                    { "bar": 2 },
+                    { "baz": 3 }
+                ]
+            }
+        `,
+        options: {
+            bracketSpacing: true,
+            multilineArraysWrapThreshold: 1,
+        },
+    },
 ];
 
 describe('json multiline array formatting', () => {
