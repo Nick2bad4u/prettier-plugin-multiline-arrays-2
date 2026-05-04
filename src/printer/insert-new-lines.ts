@@ -186,7 +186,18 @@ function insertLinesIntoArray(
                         finalLineBreakExists = false;
                         const innerCurrentParent = commaParents[0];
                         const innerCurrentParentDoc = innerCurrentParent?.parent;
-                        if (isDocCommand(currentDoc) && currentDoc.type === 'if-break') {
+                        if (
+                            isDocCommand(currentDoc) &&
+                            currentDoc.type === 'if-break' &&
+                            currentDoc.breakContents === ','
+                        ) {
+                            /**
+                             * Only treat a trailing-comma if-break (whose `breakContents` is `,`)
+                             * as the array's final line-break marker. Other if-break commands —
+                             * like the leading `| ` Prettier emits when a union type wraps — appear
+                             * inside element docs (e.g. `[A | B | C]`) and must not be forced open,
+                             * otherwise the inner union breaks unnecessarily.
+                             */
                             if (debug) {
                                 console.info(`found final line break inside of if-break`);
                             }

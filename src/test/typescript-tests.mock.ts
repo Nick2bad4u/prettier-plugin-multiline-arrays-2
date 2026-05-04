@@ -1461,6 +1461,27 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
+        it: 'leaves a union type alone inside a multi-line single-element tuple type GitHub Issue #71',
+        code: `
+            type ContainsScalar<Value> = [Value] extends [
+                Date | RegExp | URL | Error | Map<unknown, unknown> | Set<unknown>,
+            ]
+                ? true
+                : false;
+        `,
+    },
+    {
+        it: 'leaves union types alone inside a multi-line multi-element tuple type GitHub Issue #71',
+        code: `
+            type ComparePair<First, Second> = [First, Second] extends [
+                Date | RegExp | URL | Error,
+                Map<unknown, unknown> | Set<unknown> | WeakMap<object, unknown>,
+            ]
+                ? true
+                : false;
+        `,
+    },
+    {
         it: 'original parser with single line object assignment',
         code: `
             const myVar: object = {a: 'where', b: 'everywhere'};
