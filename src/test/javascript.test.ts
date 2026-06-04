@@ -540,7 +540,7 @@ const javascriptTests: MultilineArrayTest[] = [
     },
     {
         it: 'single element array on one line',
-        code: `let anotherThing = ['1 1'];`,
+        code: "let anotherThing = ['1 1'];",
         expect: `
             let anotherThing = [
                 '1 1',
@@ -594,7 +594,7 @@ const javascriptTests: MultilineArrayTest[] = [
     },
     {
         it: 'single element string array with type definition',
-        code: `const myVar = ['hello'];`,
+        code: "const myVar = ['hello'];",
         expect: `
             const myVar = [
                 'hello',
@@ -606,7 +606,7 @@ const javascriptTests: MultilineArrayTest[] = [
     },
     {
         it: 'double element string array with type definition',
-        code: `const myVar = ['hello', 'there'];`,
+        code: "const myVar = ['hello', 'there'];",
         expect: `
             const myVar = [
                 'hello',

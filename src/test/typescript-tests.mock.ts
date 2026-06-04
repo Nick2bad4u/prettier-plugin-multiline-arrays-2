@@ -1302,7 +1302,7 @@ export const typescriptTests: MultilineArrayTest[] = [
     },
     {
         it: 'single element array on one line',
-        code: `let anotherThing: string[] = ['1 1'];`,
+        code: "let anotherThing: string[] = ['1 1'];",
         expect: `
             let anotherThing: string[] = [
                 '1 1',
@@ -1356,7 +1356,7 @@ export const typescriptTests: MultilineArrayTest[] = [
     },
     {
         it: 'single element string array with type definition',
-        code: `const myVar: string[] = ['hello'];`,
+        code: "const myVar: string[] = ['hello'];",
         expect: `
             const myVar: string[] = [
                 'hello',
@@ -1368,7 +1368,7 @@ export const typescriptTests: MultilineArrayTest[] = [
     },
     {
         it: 'double element string array with type definition',
-        code: `const myVar: string[] = ['hello', 'there'];`,
+        code: "const myVar: string[] = ['hello', 'there'];",
         expect: `
             const myVar: string[] = [
                 'hello',

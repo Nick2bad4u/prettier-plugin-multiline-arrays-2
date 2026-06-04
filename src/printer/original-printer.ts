@@ -8,7 +8,7 @@ export function setOriginalPrinter(input: Printer) {
 
 export function getOriginalPrinter(): Printer {
     if (!originalPrinter) {
-        throw new Error(`originalPrinter hasn't been defined yet!`);
+        throw new Error("originalPrinter hasn't been defined yet!");
     }
     return originalPrinter;
 }

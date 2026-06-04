@@ -47,9 +47,9 @@ export const options: Record<keyof MultilineArrayOptions, SupportOption> = getOb
             type: (typeof defaultValue === 'number' ? 'int' : typeof defaultValue) as
                 | 'string'
                 | 'boolean'
-                | 'int',
+                | 'int' as any,
             category: 'multilineArray',
-            default: defaultValue as any,
+            default: defaultValue,
             description: optionHelp[key],
         };
         accum[key] = supportOption;

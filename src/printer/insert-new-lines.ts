@@ -171,7 +171,7 @@ function insertLinesIntoArray(
             let columnCount = 1;
 
             if (debug) {
-                console.info(`>>>>>>>>>>>>>> Walking children for commas`);
+                console.info('>>>>>>>>>>>>>> Walking children for commas');
             }
 
             let arrayChildCount = 0;
@@ -199,15 +199,15 @@ function insertLinesIntoArray(
                              * otherwise the inner union breaks unnecessarily.
                              */
                             if (debug) {
-                                console.info(`found final line break inside of if-break`);
+                                console.info('found final line break inside of if-break');
                             }
                             finalLineBreakExists = true;
                             if (!innerCurrentParentDoc) {
-                                throw new Error(`Found if-break without a parent`);
+                                throw new Error('Found if-break without a parent');
                             } else if (!Array.isArray(innerCurrentParentDoc)) {
-                                throw new TypeError(`if-break parent is not an array`);
+                                throw new TypeError('if-break parent is not an array');
                             } else if (commaChildIndex == undefined) {
-                                throw new Error(`if-break child index is undefined`);
+                                throw new Error('if-break child index is undefined');
                             }
                             innerCurrentParentDoc[commaChildIndex] = currentDoc.breakContents;
                             innerCurrentParentDoc.splice(
@@ -224,7 +224,7 @@ function insertLinesIntoArray(
                                 console.error({
                                     innerParentDoc: innerCurrentParentDoc,
                                 });
-                                throw new Error(`Found string but innerParentDoc is not defined.`);
+                                throw new Error('Found string but innerParentDoc is not defined.');
                             } else if (
                                 currentDoc === '<' &&
                                 Array.isArray(innerCurrentParentDoc) &&
@@ -242,7 +242,7 @@ function insertLinesIntoArray(
                             } else if (currentDoc && nestingSyntaxOpen.includes(currentDoc)) {
                                 if (!Array.isArray(innerCurrentParentDoc)) {
                                     throw new TypeError(
-                                        `Found opening syntax but parent is not an array.`,
+                                        'Found opening syntax but parent is not an array.',
                                     );
                                 }
                                 const closingIndex = innerCurrentParentDoc.findIndex(
@@ -258,7 +258,7 @@ function insertLinesIntoArray(
                                 }
                                 return false;
                             } else if (currentDoc && nestingSyntaxClose.includes(currentDoc)) {
-                                throw new Error(`Found closing syntax which shouldn't be walked`);
+                                throw new Error("Found closing syntax which shouldn't be walked");
                             } else if (currentDoc === ',') {
                                 if (debug) {
                                     console.info({
@@ -270,10 +270,10 @@ function insertLinesIntoArray(
                                         innerParentDoc: innerCurrentParentDoc,
                                     });
                                     throw new Error(
-                                        `Found comma but innerParentDoc is not an array.`,
+                                        'Found comma but innerParentDoc is not an array.',
                                     );
                                 } else if (commaChildIndex == undefined) {
-                                    throw new Error(`Found comma but childIndex is undefined.`);
+                                    throw new Error('Found comma but childIndex is undefined.');
                                 }
 
                                 let siblingIndex: number = commaChildIndex + 1;
@@ -282,17 +282,17 @@ function insertLinesIntoArray(
                                     const commaGrandParent = commaParents[1];
                                     if (commaGrandParent == undefined) {
                                         throw new Error(
-                                            `Could not find grandparent of comma group.`,
+                                            'Could not find grandparent of comma group.',
                                         );
                                     } else if (
                                         commaGrandParent.childIndexInThisParent == undefined
                                     ) {
                                         throw new Error(
-                                            `Could not find index of comma group parent`,
+                                            'Could not find index of comma group parent',
                                         );
                                     } else if (!Array.isArray(commaGrandParent.parent)) {
                                         throw new TypeError(
-                                            `Comma group grandparent is not an array.`,
+                                            'Comma group grandparent is not an array.',
                                         );
                                     }
                                     siblingIndex = commaGrandParent.childIndexInThisParent + 1;

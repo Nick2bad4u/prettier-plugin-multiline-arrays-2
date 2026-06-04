@@ -21,7 +21,7 @@ function addMultilinePrinter(options: ActualParserOptions): void {
     } else {
         const astFormat = options.astFormat;
         if (!astFormat) {
-            throw new Error(`Could not find astFormat while adding printer.`);
+            throw new Error('Could not find astFormat while adding printer.');
         }
         /**
          * If the printer hasn't already been assigned in options, rearrange plugins so that ours
@@ -50,7 +50,7 @@ function addMultilinePrinter(options: ActualParserOptions): void {
         });
         const thisPlugin = plugins[thisPluginIndex];
         if (!thisPlugin) {
-            throw new Error(`This plugin was not found.`);
+            throw new Error('This plugin was not found.');
         }
 
         /** Add this plugin to the beginning of the array so its printer is found first. */

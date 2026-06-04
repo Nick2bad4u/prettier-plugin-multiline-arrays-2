@@ -136,10 +136,10 @@ async function runPrettierTests() {
     });
 
     if (success) {
-        log.success(`Versioned tests passed.`);
+        log.success('Versioned tests passed.');
         process.exit(0);
     } else {
-        log.error(`Versioned tests failed.`);
+        log.error('Versioned tests failed.');
         process.exit(1);
     }
 }
