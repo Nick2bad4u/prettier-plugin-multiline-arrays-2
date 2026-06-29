@@ -3,5 +3,9 @@ import {runTests} from './run-tests.mock.js';
 import {typescriptTests} from './typescript-tests.mock.js';
 
 describe('typescript multiline array formatting', () => {
-    runTests('.ts', typescriptTests, 'typescript');
+    runTests({
+        extension: '.ts',
+        tests: typescriptTests,
+        parser: 'typescript',
+    });
 });

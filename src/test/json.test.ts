@@ -42,7 +42,7 @@ const jsonTests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'should format tsconfig.json keys still',
+        it: 'still formats tsconfig.json keys',
         code: `
             {
                 "exclude": [
@@ -160,7 +160,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'should leave trailing newline',
+        it: 'leaves trailing newline',
         code: `
             {
                 "import": ".cspell-base.json",
@@ -386,5 +386,9 @@ const jsonTests: MultilineArrayTest[] = [
 ];
 
 describe('json multiline array formatting', () => {
-    runTests('.json', jsonTests, 'json');
+    runTests({
+        extension: '.json',
+        tests: jsonTests,
+        parser: 'json',
+    });
 });

@@ -66,7 +66,11 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
                 throw new Error(`Cannot read line location for comment ${currentComment.value}`);
             }
 
-            const nextLineCounts = getLineCounts(commentText, true, debug);
+            const nextLineCounts = getLineCounts({
+                commentText,
+                nextOnly: true,
+                debug,
+            });
             if (nextLineCounts.length) {
                 accum.nextLineCounts[currentComment.loc.end.line] = nextLineCounts;
             }
@@ -76,7 +80,11 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
                 accum.nextWrapThresholds[currentComment.loc.end.line] = nextWrapThreshold;
             }
 
-            const setLineCounts = getLineCounts(commentText, false, debug);
+            const setLineCounts = getLineCounts({
+                commentText,
+                nextOnly: false,
+                debug,
+            });
             if (setLineCounts.length) {
                 accum.setLineCounts[currentComment.loc.end.line] = {
                     data: setLineCounts,
@@ -160,7 +168,11 @@ function getWrapThreshold(commentText: string | undefined, nextOnly: boolean): n
     }
 }
 
-export function parseNextLineCounts(input: string, nextOnly: boolean, debug: boolean): number[] {
+export function parseNextLineCounts({
+    input,
+    nextOnly,
+    debug,
+}: Readonly<{input: string; nextOnly: boolean; debug: boolean}>): number[] {
     if (!input) {
         return [];
     }
@@ -196,11 +208,13 @@ export function parseNextLineCounts(input: string, nextOnly: boolean, debug: boo
     );
 
     const invalidNumbers = numbers
-        .map((entry, index) => ({
-            index,
-            entry,
-            original: split[index],
-        }))
+        .map((entry, index) => {
+            return {
+                index,
+                entry,
+                original: split[index],
+            };
+        })
         .filter((entry) => {
             return isNaN(entry.entry);
         });
@@ -208,17 +222,19 @@ export function parseNextLineCounts(input: string, nextOnly: boolean, debug: boo
     if (invalidNumbers.length) {
         if (debug) {
             console.error(
-                invalidNumbers.map((entry) => ({
-                    index: entry.index,
-                    original: entry.original,
-                    parsed: entry,
-                    split,
-                    input,
-                    numbers,
-                    trim: entry.original?.trim(),
-                    match: entry.original?.trim().match(/^\d+$/),
-                    matched: !!entry.original?.trim().match(/^\d+$/),
-                })),
+                invalidNumbers.map((entry) => {
+                    return {
+                        index: entry.index,
+                        original: entry.original,
+                        parsed: entry,
+                        split,
+                        input,
+                        numbers,
+                        trim: entry.original?.trim(),
+                        match: entry.original?.trim().match(/^\d+$/),
+                        matched: !!entry.original?.trim().match(/^\d+$/),
+                    };
+                }),
             );
         }
         console.error(
@@ -235,15 +251,19 @@ function isResetComment(commentText: string | undefined): boolean {
     return !!commentText?.toLowerCase().includes(resetComment);
 }
 
-function getLineCounts(
-    commentText: string | undefined,
-    nextOnly: boolean,
-    debug: boolean,
-): number[] {
+function getLineCounts({
+    commentText,
+    nextOnly,
+    debug,
+}: Readonly<{commentText: string | undefined; nextOnly: boolean; debug: boolean}>): number[] {
     const searchText = nextOnly ? nextLinePatternComment : setLinePatternComment;
 
     if (commentText?.toLowerCase().includes(searchText)) {
-        return parseNextLineCounts(commentText, nextOnly, debug);
+        return parseNextLineCounts({
+            input: commentText,
+            nextOnly,
+            debug,
+        });
     } else {
         return [];
     }

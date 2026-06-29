@@ -6,19 +6,23 @@ type Parents = {parent: Doc; childIndexInThisParent: number | undefined};
  * @returns Boolean true means keep walking children and siblings, false means stop walking children
  *   and siblings. Returning false does not stop walking of aunts/uncles or ancestors.
  */
-export function walkDoc(
-    startDoc: Doc,
-    /** Return something falsy to prevent walking of child docs */
-    debug: boolean,
-    /** If this returns something falsy, none of the current node's children will be walked. */
+export function walkDoc({
+    startDoc,
+    debug,
+    callback,
+    parents = [],
+    index,
+}: Readonly<{
+    startDoc: Doc;
+    debug: boolean;
     callback: (
         currentDoc: Doc,
         parents: Parents[],
         index: number | undefined,
-    ) => boolean | void | undefined,
-    parents: Parents[] = [],
-    index?: number | undefined,
-): boolean {
+    ) => boolean | void | undefined;
+    parents?: Parents[];
+    index?: number | undefined;
+}>): boolean {
     if (!startDoc) {
         return true;
     }
@@ -47,11 +51,11 @@ export function walkDoc(
         }
         // one a child returns false, abort walking this array
         startDoc.every((innerDoc, index): boolean => {
-            return walkDoc(
-                innerDoc,
+            return walkDoc({
+                startDoc: innerDoc,
                 debug,
                 callback,
-                [
+                parents: [
                     {
                         parent: startDoc,
                         childIndexInThisParent: index,
@@ -59,42 +63,42 @@ export function walkDoc(
                     ...parents,
                 ],
                 index,
-            );
+            });
         });
     } else if ('contents' in startDoc) {
         if (debug) {
             console.info('walking contents property');
         }
-        return walkDoc(
-            startDoc.contents,
+        return walkDoc({
+            startDoc: startDoc.contents,
             debug,
             callback,
-            [
+            parents: [
                 {
                     parent: startDoc,
                     childIndexInThisParent: undefined,
                 },
                 ...parents,
             ],
-            undefined,
-        );
+            index: undefined,
+        });
     } else if ('parts' in startDoc) {
         if (debug) {
             console.info('walking parts property');
         }
-        return walkDoc(
-            startDoc.parts,
+        return walkDoc({
+            startDoc: startDoc.parts,
             debug,
             callback,
-            [
+            parents: [
                 {
                     parent: startDoc,
                     childIndexInThisParent: undefined,
                 },
                 ...parents,
             ],
-            undefined,
-        );
+            index: undefined,
+        });
     }
     return true;
 }

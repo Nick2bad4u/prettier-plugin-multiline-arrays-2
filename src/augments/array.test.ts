@@ -3,7 +3,7 @@ import {describe, it} from '@augment-vir/test';
 import {extractTextBetweenRanges} from './array.js';
 
 describe(extractTextBetweenRanges.name, () => {
-    it('should extract text from multiple lines', () => {
+    it('extracts text from multiple lines', () => {
         assert.strictEquals(
             extractTextBetweenRanges(
                 [
@@ -27,7 +27,7 @@ describe(extractTextBetweenRanges.name, () => {
         );
     });
 
-    it('should extract text from the same line', () => {
+    it('extracts text from the same line', () => {
         assert.strictEquals(
             extractTextBetweenRanges(['a b c d e f g h i j k l m n'], {
                 start: {

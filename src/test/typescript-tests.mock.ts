@@ -58,7 +58,7 @@ export const typescriptTests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'should work with multiple nested arrays',
+        it: 'works with multiple nested arrays',
         code: `
             const thingie = [
                 [
@@ -492,7 +492,7 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'should set array threshold for all array elements',
+        it: 'sets array threshold for all array elements',
         code: `
             // ${setWrapThresholdComment} 8
             const thing = [
@@ -569,7 +569,7 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'should still properly wrap when lots of comments exist',
+        it: 'still properly wraps when lots of comments exist',
         code: `
             const thing = [
                 // comment here
@@ -642,7 +642,7 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'should wrap array with multiline comments',
+        it: 'wraps array with multiline comments',
         code: `
             /*
                 ANOTHER multiline comment
@@ -881,7 +881,7 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'should still sort imports with multiline parser',
+        it: 'still sorts imports with multiline parser',
         code: `
             import {notUsed} from 'blah';
             const thingie = [

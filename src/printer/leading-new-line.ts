@@ -1,12 +1,17 @@
 import {type BaseNode} from 'estree';
 import {extractTextBetweenRanges} from '../augments/array.js';
 
-export function containsLeadingNewline(
-    nodeLocation: BaseNode['loc'],
-    children: (BaseNode | null)[],
-    originalLines: string[],
-    debug: boolean,
-) {
+export function containsLeadingNewline({
+    nodeLocation,
+    children,
+    originalLines,
+    debug,
+}: Readonly<{
+    nodeLocation: BaseNode['loc'];
+    children: (BaseNode | null)[];
+    originalLines: string[];
+    debug: boolean;
+}>) {
     const firstElement = children[0];
     if (firstElement) {
         const startLocation = nodeLocation?.start;

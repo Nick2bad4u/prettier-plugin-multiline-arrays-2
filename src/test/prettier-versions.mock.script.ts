@@ -128,7 +128,9 @@ async function runPrettierTests() {
 
     versionPasses.forEach(({success, version}) => {
         log.info(
-            `Prettier v${version}: ${success ? logColors.success : logColors.error}${success ? 'pass' : 'fail'}${logColors.reset}`,
+            `Prettier v${version}: ${success ? logColors.success : logColors.error}${
+                success ? 'pass' : 'fail'
+            }${logColors.reset}`,
         );
     });
     const success = versionPasses.every(({success}) => {

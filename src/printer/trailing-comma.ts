@@ -1,13 +1,15 @@
 import {type BaseNode} from 'estree';
 import {extractTextBetweenRanges} from '../augments/array.js';
 
-export function containsTrailingComma(
-    nodeLocation: BaseNode['loc'],
-    children: (BaseNode | null)[],
-    originalLines: string[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    debug: boolean,
-): boolean {
+export function containsTrailingComma({
+    nodeLocation,
+    children,
+    originalLines,
+}: Readonly<{
+    nodeLocation: BaseNode['loc'];
+    children: (BaseNode | null)[];
+    originalLines: string[];
+}>): boolean {
     const lastElement = children[children.length - 1];
     if (lastElement) {
         const startLocation = lastElement.loc?.end;

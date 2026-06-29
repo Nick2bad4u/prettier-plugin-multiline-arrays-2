@@ -1,24 +1,50 @@
-import {assert} from '@augment-vir/assert';
-import {type PartialWithNullable, removeColor} from '@augment-vir/common';
+import {assert, check} from '@augment-vir/assert';
+import {
+    omitObjectKeys,
+    type PartialWithNullable,
+    removeColor,
+    removeNullishValues,
+} from '@augment-vir/common';
 import {it} from '@augment-vir/test';
-import {type Options as PrettierOptions, format as prettierFormat} from 'prettier';
+import {format as prettierFormat, type Options as PrettierOptions} from 'prettier';
 import {type MultilineArrayOptions} from '../options.js';
 import {repoConfig} from './prettier-config.js';
 
-async function runPrettierFormat(
-    code: string,
-    extension: string,
-    options: Partial<MultilineArrayOptions> = {},
-    parser: string | undefined,
-): Promise<string> {
+async function runPrettierFormat({
+    code,
+    extension,
+    options = {},
+    parser,
+}: Readonly<{
+    code: string;
+    extension: string;
+    options?: (Partial<MultilineArrayOptions> & PartialWithNullable<PrettierOptions>) | undefined;
+    parser: string | undefined;
+}>): Promise<string> {
     if (extension.startsWith('.')) {
         extension = extension.slice(1);
     }
 
+    const filepathOptions: Partial<Pick<PrettierOptions, 'filepath'>> = check.isString(
+        options.filepath,
+    )
+        ? {
+              filepath: options.filepath,
+          }
+        : 'filepath' in options
+        ? {}
+        : {
+              filepath: `blah.${extension}`,
+          };
+
     const prettierOptions: PrettierOptions = {
-        filepath: `blah.${extension}`,
         ...repoConfig,
-        ...options,
+        ...removeNullishValues(
+            omitObjectKeys(options, [
+                'filepath',
+            ]),
+        ),
+        ...filepathOptions,
         ...(parser
             ? {
                   parser,
@@ -49,23 +75,27 @@ function removeIndent(input: string): string {
             .replace(/^\s*\n\s*/, '')
             .replace(/\n {12}/g, '\n')
             // this is only used for tests
-            // eslint-disable-next-line sonarjs/slow-regex
-            .replace(/\n\s+$/, '\n')
+
+            .replace(/\n[ \t]+$/, '\n')
     );
 }
 
-export function runTests(extension: string, tests: MultilineArrayTest[], parser: string) {
+export function runTests({
+    extension,
+    tests,
+    parser,
+}: Readonly<{extension: string; tests: MultilineArrayTest[]; parser: string}>) {
     tests.forEach((test) => {
         async function testCallback() {
             try {
                 const inputCode = removeIndent(test.code);
                 const expected = removeIndent(test.expect ?? test.code);
-                const formatted = await runPrettierFormat(
-                    inputCode,
+                const formatted = await runPrettierFormat({
+                    code: inputCode,
                     extension,
-                    test.options,
+                    options: test.options,
                     parser,
-                );
+                });
                 assert.strictEquals(formatted, expected);
                 if (formatted !== expected) {
                     allPassed = false;

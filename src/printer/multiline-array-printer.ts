@@ -24,6 +24,7 @@ export function createMultilineArrayPrinter(basePrinter: Printer<Node>): Printer
          * Without this 4th parameter, Prettier's internal printing logic behaves differently,
          * causing incorrect output for non-array code (like function calls).
          */
+        // eslint-disable-next-line @virmator/prefer-params-object
         print(
             path: AstPath<Node>,
             options: ParserOptions,
@@ -58,7 +59,12 @@ export function createMultilineArrayPrinter(basePrinter: Printer<Node>): Printer
 
             const multilineOptions: MultilineArrayOptions & ParserOptions = fillInOptions(options);
 
-            return printWithMultilineArrays(originalOutput, path, multilineOptions, debug);
+            return printWithMultilineArrays({
+                originalFormattedOutput: originalOutput,
+                path,
+                inputOptions: multilineOptions,
+                debug,
+            });
         },
     };
 }

@@ -213,7 +213,7 @@ const javascriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'should still sort imports with multiline parser',
+        it: 'still sorts imports with multiline parser',
         code: `
             import {notUsed} from 'blah';
             const thingie = [
@@ -697,5 +697,9 @@ const javascriptTests: MultilineArrayTest[] = [
 ];
 
 describe('javascript multiline array formatting', () => {
-    runTests('.js', javascriptTests, 'babel');
+    runTests({
+        extension: '.js',
+        tests: javascriptTests,
+        parser: 'babel',
+    });
 });

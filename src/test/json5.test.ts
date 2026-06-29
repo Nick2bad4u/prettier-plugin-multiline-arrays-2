@@ -205,5 +205,9 @@ const json5Tests: MultilineArrayTest[] = [
 ];
 
 describe('json5 multiline array formatting', () => {
-    runTests('.json', json5Tests, 'json5');
+    runTests({
+        extension: '.json',
+        tests: json5Tests,
+        parser: 'json5',
+    });
 });
