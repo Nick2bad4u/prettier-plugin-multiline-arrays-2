@@ -17,7 +17,25 @@ const nestingSyntaxClose = ']})`';
 
 const found = 'Found "[" but:';
 
-function insertLinesIntoArray({
+function extractIndentDoc({
+    maybeIndentDoc,
+}: Readonly<{
+    maybeIndentDoc: Doc | undefined;
+}>): ReturnType<typeof doc.builders.indent> | undefined {
+    if (isDocCommand(maybeIndentDoc) && maybeIndentDoc.type === 'indent') {
+        return maybeIndentDoc;
+    } else if (Array.isArray(maybeIndentDoc)) {
+        const firstDoc = maybeIndentDoc[0];
+
+        if (isDocCommand(firstDoc) && firstDoc.type === 'indent') {
+            return firstDoc;
+        }
+    }
+
+    return undefined;
+}
+
+export function insertLinesIntoArray({
     inputDoc,
     manualWrap,
     lineCounts,
@@ -95,20 +113,25 @@ function insertLinesIntoArray({
                     parentDoc[childIndex + 2] = maybeBreak.breakContents;
                 }
                 const indentIndex = childIndex + 1;
-                const bracketSibling =
+                const maybeBracketSibling =
                     parentDoc[indentIndex] === ''
                         ? parentDoc[indentIndex + 1]
                         : parentDoc[indentIndex];
+                const bracketSibling = extractIndentDoc({
+                    maybeIndentDoc: maybeBracketSibling,
+                });
                 if (debug) {
                     console.info({
                         bracketSibling,
                     });
                 }
-                if (bracketSibling === ']') {
+                if (maybeBracketSibling === ']') {
                     return false;
-                } else if (!isDocCommand(bracketSibling) || bracketSibling.type !== 'indent') {
+                } else if (!bracketSibling) {
                     throw new Error(
-                        `${found} its sibling was not an indent Doc.: ${stringify(bracketSibling)}`,
+                        `${found} its sibling was not an indent Doc.: ${stringify(
+                            maybeBracketSibling,
+                        )}`,
                     );
                 }
                 const indentContents = bracketSibling.contents;

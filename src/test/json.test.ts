@@ -346,6 +346,18 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
+        it: 'handles array with only comments GitHub Issue #75',
+        code: `
+            {
+                "editor.codeActionsOnSave": [
+                    // "hello",
+                    // "source.fixAll.eslint",
+                    // "source.fixAll.prettier",
+                ]
+            }
+        `,
+    },
+    {
         it: 'basic JSON array',
         code: `
             {
