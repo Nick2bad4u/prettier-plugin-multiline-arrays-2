@@ -1,6 +1,7 @@
 import {assert, assertWrap} from '@augment-vir/assert';
 import {awaitedBlockingMap, indent, log, logColors} from '@augment-vir/common';
 import {readPackageJson, runShellCommand} from '@augment-vir/node';
+import {calculateRelativeDate, createUtcFullDate, getNowInUtcTimezone, toTimestamp} from 'date-vir';
 import {resolve} from 'node:path';
 import {assertValidShape, defineShape, recordShape, unknownShape} from 'object-shape-tester';
 import semver from 'semver';
@@ -33,12 +34,29 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
                 keys: '',
                 values: unknownShape(),
             }),
+            time: recordShape({
+                keys: '',
+                values: '',
+            }),
         }),
         {
             allowExtraKeys: true,
         },
     );
-    const rawVersions = Object.keys(responseJson.versions);
+    const oldestAllowedPublishTime = toTimestamp(
+        calculateRelativeDate(getNowInUtcTimezone(), {
+            days: -5,
+        }),
+    );
+    const rawVersions = Object.keys(responseJson.versions).filter((version) => {
+        const publishTime = responseJson.time[version];
+        if (!publishTime) {
+            log.warning(`Failed to find publish time for Prettier version: ${version}`);
+            return false;
+        }
+
+        return toTimestamp(createUtcFullDate(publishTime)) <= oldestAllowedPublishTime;
+    });
 
     const mappedLatestMinorVersions = rawVersions.reduce(
         (latestMinorVersions, version) => {

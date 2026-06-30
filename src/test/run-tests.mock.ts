@@ -32,10 +32,10 @@ async function runPrettierFormat({
               filepath: options.filepath,
           }
         : 'filepath' in options
-        ? {}
-        : {
-              filepath: `blah.${extension}`,
-          };
+          ? {}
+          : {
+                filepath: `blah.${extension}`,
+            };
 
     const prettierOptions: PrettierOptions = {
         ...repoConfig,
