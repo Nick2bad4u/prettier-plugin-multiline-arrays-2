@@ -14,8 +14,27 @@ import {containsTrailingComma} from './trailing-comma.js';
 
 const nestingSyntaxOpen = '[{(`';
 const nestingSyntaxClose = ']})`';
+const matchingNestingSyntaxClose: Record<string, string> = {
+    '[': ']',
+    '{': '}',
+    '(': ')',
+    '`': '`',
+};
 
 const found = 'Found "[" but:';
+
+function isMatchingNestingSyntaxClose({
+    maybeClose,
+    openingSyntax,
+}: Readonly<{
+    maybeClose: string;
+    openingSyntax: string;
+}>): boolean {
+    const closingSyntax = matchingNestingSyntaxClose[openingSyntax];
+    const firstCharacter = maybeClose.trimStart()[0];
+
+    return !!firstCharacter && closingSyntax === firstCharacter;
+}
 
 function extractIndentDoc({
     maybeIndentDoc,
@@ -290,7 +309,10 @@ export function insertLinesIntoArray({
                                         (sibling) =>
                                             typeof sibling === 'string' &&
                                             sibling &&
-                                            nestingSyntaxClose.includes(sibling),
+                                            isMatchingNestingSyntaxClose({
+                                                maybeClose: sibling,
+                                                openingSyntax: currentDoc,
+                                            }),
                                     );
                                     if (closingIndex < 0) {
                                         throw new Error(

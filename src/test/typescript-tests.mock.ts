@@ -769,6 +769,16 @@ export const typescriptTests: MultilineArrayTest[] = [
       `,
     },
     {
+        it: 'handles block comment starting with a brace GitHub Issue #56',
+        code: `
+            const test = [
+                /*{
+                },*/
+                {},
+            ];
+        `,
+    },
+    {
         it: 'line pattern comments should override options property',
         code: `
             const pl = [
