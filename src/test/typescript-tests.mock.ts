@@ -459,6 +459,82 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
+        it: 'line pattern comment targets array inside next export declaration',
+        code: `
+            // ${nextLinePatternComment} 2 1
+            export const linePatternArray = [
+                'a',
+                'b',
+                'c',
+                'd',
+                'e',
+            ];
+        `,
+        expect: `
+            // ${nextLinePatternComment} 2 1
+            export const linePatternArray = [
+                'a', 'b',
+                'c',
+                'd', 'e',
+            ];
+        `,
+    },
+    {
+        it: 'line pattern comment targets array inside next new expression GitHub Issue #73',
+        code: `
+            // ${nextLinePatternComment} 4
+            const bytes = new Uint8Array(
+                [
+                    255,
+                    0,
+                    255,
+                    255,
+                    0,
+                    0,
+                    0,
+                    255,
+                    0,
+                    0,
+                    0,
+                    255,
+                    255,
+                    0,
+                    255,
+                    255,
+                ],
+            );
+        `,
+        expect: `
+            // ${nextLinePatternComment} 4
+            const bytes = new Uint8Array([
+                255, 0, 255, 255,
+                0, 0, 0, 255,
+                0, 0, 0, 255,
+                255, 0, 255, 255,
+            ]);
+        `,
+    },
+    {
+        it: 'wrap threshold comment targets array inside next call expression GitHub Issue #73',
+        code: `
+            // ${nextWrapThresholdComment} 10
+            const values = createValues(
+                [
+                    1,
+                    2,
+                    3,
+                ],
+            );
+        `,
+        expect: `
+            // ${nextWrapThresholdComment} 10
+            const values = createValues([1, 2, 3]);
+        `,
+        options: {
+            multilineArraysWrapThreshold: 0,
+        },
+    },
+    {
         it: 'set line pattern comment should carry through',
         code: `
             // ${setLinePatternComment} 2

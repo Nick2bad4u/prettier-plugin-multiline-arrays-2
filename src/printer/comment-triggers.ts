@@ -1,3 +1,4 @@
+import {check} from '@augment-vir/assert';
 import {getObjectTypedKeys} from '@augment-vir/common';
 import {type Comment, type Node} from 'estree';
 import {
@@ -12,8 +13,9 @@ import {
     untilSetWrapThresholdCommentRegExp,
 } from '../options.js';
 import {extractComments} from './comments.js';
+import {isArrayLikeNode} from './supported-node-types.js';
 
-type LineNumberDetails<T> = {[lineNumber: number]: T};
+type LineNumberDetails<T> = {[lineNumber: string]: T};
 export type LineCounts = LineNumberDetails<number[]>;
 export type WrapThresholds = LineNumberDetails<number>;
 export type CommentTriggerWithEnding<T> = {
@@ -32,6 +34,25 @@ type InternalCommentTriggers = CommentTriggers & {
 };
 
 const mappedCommentTriggers = new WeakMap<Node, CommentTriggers>();
+
+const ignoredAstChildKeys: string[] = [
+    'comments',
+    'leadingComments',
+    'loc',
+    'range',
+    'raw',
+    'tokens',
+    'trailingComments',
+    'value',
+];
+
+const descendantBoundaryTypes: string[] = [
+    'ArrowFunctionExpression',
+    'ClassDeclaration',
+    'ClassExpression',
+    'FunctionDeclaration',
+    'FunctionExpression',
+];
 
 export function getCommentTriggers(key: Node, debug: boolean): CommentTriggers {
     const alreadyExisting = mappedCommentTriggers.get(key);
@@ -113,6 +134,10 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
     internalCommentTriggers.resets.sort();
 
     setResets(internalCommentTriggers);
+    mapNextCommentTriggers({
+        internalCommentTriggers,
+        rootNode,
+    });
 
     const commentTriggers = {
         ...internalCommentTriggers,
@@ -122,6 +147,177 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
     // save to a map so we don't have to recalculate these every time
     mappedCommentTriggers.set(rootNode, commentTriggers);
     return commentTriggers;
+}
+
+function mapNextCommentTriggers({
+    internalCommentTriggers,
+    rootNode,
+}: Readonly<{
+    internalCommentTriggers: InternalCommentTriggers;
+    rootNode: Node;
+}>): void {
+    internalCommentTriggers.nextLineCounts = mapNextLineTriggers({
+        rootNode,
+        triggers: internalCommentTriggers.nextLineCounts,
+    });
+    internalCommentTriggers.nextWrapThresholds = mapNextLineTriggers({
+        rootNode,
+        triggers: internalCommentTriggers.nextWrapThresholds,
+    });
+}
+
+function mapNextLineTriggers<T>({
+    rootNode,
+    triggers,
+}: Readonly<{
+    rootNode: Node;
+    triggers: LineNumberDetails<T>;
+}>): LineNumberDetails<T> {
+    return getObjectTypedKeys(triggers).reduce<LineNumberDetails<T>>(
+        (mappedTriggers, triggerLineNumber) => {
+            const trigger = triggers[triggerLineNumber];
+            const targetLineNumber = findArrayLikeTargetLine({
+                nextLineNumber: Number(triggerLineNumber) + 1,
+                rootNode,
+            });
+
+            if (targetLineNumber == undefined || trigger == undefined) {
+                return mappedTriggers;
+            }
+
+            return {
+                ...mappedTriggers,
+                [targetLineNumber]: trigger,
+            };
+        },
+        {},
+    );
+}
+
+function findArrayLikeTargetLine({
+    rootNode,
+    nextLineNumber,
+}: Readonly<{
+    rootNode: Node;
+    nextLineNumber: number;
+}>): number | undefined {
+    return findAstNodesStartingOnLine({
+        lineNumber: nextLineNumber,
+        rootNode,
+    })
+        .flatMap((node) => {
+            return findArrayLikeDescendantLines({
+                rootNode: node,
+            });
+        })
+        .toSorted((firstLine, secondLine) => {
+            return firstLine - secondLine;
+        })[0];
+}
+
+function findAstNodesStartingOnLine({
+    rootNode,
+    lineNumber,
+}: Readonly<{
+    rootNode: Node;
+    lineNumber: number;
+}>): Node[] {
+    return collectAstNodes({
+        input: rootNode,
+        shouldInclude: (node) => {
+            return node.loc?.start.line === lineNumber;
+        },
+    });
+}
+
+function findArrayLikeDescendantLines({
+    rootNode,
+}: Readonly<{
+    rootNode: Node;
+}>): number[] {
+    return collectAstNodes({
+        input: rootNode,
+        shouldInclude: (node) => {
+            return isArrayLikeNode(node) && !!node.loc;
+        },
+        shouldWalkChildren: (node, isRootNode) => {
+            return isRootNode || !descendantBoundaryTypes.includes(node.type);
+        },
+    }).flatMap((node) => {
+        if (!node.loc) {
+            return [];
+        }
+
+        return [
+            node.loc.start.line,
+        ];
+    });
+}
+
+function collectAstNodes({
+    input,
+    shouldInclude,
+    shouldWalkChildren = () => true,
+    seenInputs = new WeakSet<object>(),
+    isRootNode = true,
+}: Readonly<{
+    input: unknown;
+    shouldInclude: (node: Node, isRootNode: boolean) => boolean;
+    shouldWalkChildren?: ((node: Node, isRootNode: boolean) => boolean) | undefined;
+    seenInputs?: WeakSet<object> | undefined;
+    isRootNode?: boolean | undefined;
+}>): Node[] {
+    if (check.isArray(input)) {
+        return input.flatMap((child) => {
+            return collectAstNodes({
+                input: child,
+                isRootNode: false,
+                seenInputs,
+                shouldInclude,
+                shouldWalkChildren,
+            });
+        });
+    } else if (!check.isObject(input)) {
+        return [];
+    } else if (seenInputs.has(input)) {
+        return [];
+    }
+
+    seenInputs.add(input);
+
+    if (!isAstNode(input)) {
+        return [];
+    }
+
+    const matchingNode = shouldInclude(input, isRootNode)
+        ? [
+              input,
+          ]
+        : [];
+    const childNodes = shouldWalkChildren(input, isRootNode)
+        ? getObjectTypedKeys(input).flatMap((nodeKey) => {
+              if (ignoredAstChildKeys.includes(String(nodeKey))) {
+                  return [];
+              }
+
+              return collectAstNodes({
+                  input: Reflect.get(input, nodeKey),
+                  isRootNode: false,
+                  seenInputs,
+                  shouldInclude,
+                  shouldWalkChildren,
+              });
+          })
+        : [];
+
+    return [
+        ...matchingNode,
+        ...childNodes,
+    ];
+}
+
+function isAstNode(input: object): input is Node {
+    return check.isObject(input) && check.isString(input.type);
 }
 
 function setResets(internalCommentTriggers: InternalCommentTriggers): void {
@@ -142,7 +338,7 @@ function setResets(internalCommentTriggers: InternalCommentTriggers): void {
             }
             const endLineNumber: number =
                 internalCommentTriggers.resets.find((resetLineNumber): boolean => {
-                    return lineNumber < resetLineNumber;
+                    return Number(lineNumber) < resetLineNumber;
                 }) ?? currentLineNumberStats.lineEnd;
 
             currentLineNumberStats.lineEnd = endLineNumber;

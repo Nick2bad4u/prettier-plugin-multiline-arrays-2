@@ -617,7 +617,6 @@ export function printWithMultilineArrays({
             throw new Error(`Could not find location of node ${node.type}`);
         }
         const currentLineNumber = node.loc.start.line;
-        const lastLine = currentLineNumber - 1;
         const commentTriggers = getCommentTriggers(rootNode, debug);
 
         const originalText: string = inputOptions.originalText;
@@ -659,7 +658,7 @@ export function printWithMultilineArrays({
         );
 
         const lineCounts: number[] =
-            commentTriggers.nextLineCounts[lastLine] ??
+            commentTriggers.nextLineCounts[currentLineNumber] ??
             relevantSetLineCount ??
             parseNextLineCounts({
                 input: inputOptions.multilineArraysLinePattern,
@@ -673,15 +672,15 @@ export function printWithMultilineArrays({
         );
 
         const wrapThreshold: number =
-            commentTriggers.nextWrapThresholds[lastLine] ??
+            commentTriggers.nextWrapThresholds[currentLineNumber] ??
             relevantSetWrapCommentThreshold ??
             (inputOptions.multilineArraysWrapThreshold < 0
                 ? Infinity
                 : inputOptions.multilineArraysWrapThreshold);
 
         const includesCommentTrigger: boolean =
-            (commentTriggers.nextWrapThresholds[lastLine] ?? relevantSetWrapCommentThreshold) !=
-                undefined || !!lineCounts.length;
+            (commentTriggers.nextWrapThresholds[currentLineNumber] ??
+                relevantSetWrapCommentThreshold) != undefined || !!lineCounts.length;
 
         if (debug) {
             console.info(`======= Starting call to ${insertLinesIntoArray.name}: =======`);
