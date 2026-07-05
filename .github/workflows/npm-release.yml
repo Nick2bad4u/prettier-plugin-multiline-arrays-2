@@ -49,5 +49,3 @@ jobs:
         with:
             release_type: "${{ inputs.release_type || '' }}"
             version: "${{ inputs.version || '' }}"
-        secrets:
-            NPM_TOKEN: "${{ secrets.NPM_TOKEN }}"
