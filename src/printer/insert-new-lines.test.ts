@@ -1,30 +1,25 @@
-import {assert} from '@augment-vir/assert';
-import {describe, it} from '@augment-vir/test';
-import {type Doc, doc} from 'prettier';
-import {insertLinesIntoArray} from './insert-new-lines.js';
+import { assert } from "@augment-vir/assert";
+import { describe, it } from "@augment-vir/test";
+import { doc } from "prettier";
+import type { Doc } from "prettier";
+import { insertLinesIntoArray } from "./insert-new-lines.js";
 
 describe(insertLinesIntoArray.name, () => {
-    it('handles comment-only array doc emitted by Prettier GitHub Issue #75', () => {
+    it("handles comment-only array doc emitted by Prettier GitHub Issue #75", () => {
         const commentOnlyArrayDoc: Doc = [
-            '[',
+            "[",
             [
                 doc.builders.indent([
                     doc.builders.softline,
                     [
                         '// "source.fixAll.eslint",',
-                        [
-                            doc.builders.hardline,
-                            doc.builders.breakParent,
-                        ],
+                        [doc.builders.hardline, doc.builders.breakParent],
                         '// "source.fixAll.prettier",',
                     ],
                 ]),
-                [
-                    doc.builders.hardline,
-                    doc.builders.breakParent,
-                ],
+                [doc.builders.hardline, doc.builders.breakParent],
             ],
-            ']',
+            "]",
         ];
 
         assert.strictEquals(
@@ -35,7 +30,7 @@ describe(insertLinesIntoArray.name, () => {
                 wrapThreshold: Infinity,
                 debug: false,
             }),
-            commentOnlyArrayDoc,
+            commentOnlyArrayDoc
         );
     });
 });

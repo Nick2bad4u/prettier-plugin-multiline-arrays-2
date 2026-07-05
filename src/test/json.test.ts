@@ -1,10 +1,10 @@
-import {describe} from '@augment-vir/test';
-import {nextWrapThresholdComment} from '../options.js';
-import {type MultilineArrayTest, runTests} from './run-tests.mock.js';
+import { describe } from "@augment-vir/test";
+import { nextWrapThresholdComment } from "../options.js";
+import { type MultilineArrayTest, runTests } from "./run-tests.mock.js";
 
 const jsonTests: MultilineArrayTest[] = [
     {
-        it: 'formats ending array correctly',
+        it: "formats ending array correctly",
         code: `
             {
                 "files": [],
@@ -16,7 +16,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'basic JSON format',
+        it: "basic JSON format",
         code: `
             {
                 "hello": "there",
@@ -27,14 +27,14 @@ const jsonTests: MultilineArrayTest[] = [
         expect: `
             {
                 "hello": "there",
-                "object": {"example": "instance"},
                 "stuff": [
                     "a",
                     "b",
                     "c",
                     "d",
                     "e"
-                ]
+                ],
+                "object": {"example": "instance"}
             }
         `,
         options: {
@@ -42,7 +42,7 @@ const jsonTests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'still formats tsconfig.json keys',
+        it: "still formats tsconfig.json keys",
         code: `
             {
                 "exclude": [
@@ -60,40 +60,40 @@ const jsonTests: MultilineArrayTest[] = [
         `,
         expect: `
             {
-                "compilerOptions": {
-                    "outDir": "./dist",
-                    "rootDir": "./src"
-                },
                 "exclude": [
                     "./configs",
                     "./coverage",
                     "./dist",
                     "./node_modules",
                     "./test-files"
-                ]
+                ],
+                "compilerOptions": {
+                    "outDir": "./dist",
+                    "rootDir": "./src"
+                }
             }
         `,
     },
     {
-        it: 'basic wrap threshold comment',
+        it: "basic wrap threshold comment",
         code: `
             // ${nextWrapThresholdComment} 3
             ["hello"]
         `,
     },
     {
-        it: 'invalid wrap threshold triggers error',
+        it: "invalid wrap threshold triggers error",
         code: `
             ["hello"]
         `,
         options: {
-            multilineArraysWrapThreshold: 'fifty two' as any,
+            multilineArraysWrapThreshold: "fifty two" as any,
         },
         failureMessage:
             'Invalid multilineArraysWrapThreshold value. Expected an integer, but received "fifty two".',
     },
     {
-        it: 'exact code desired by Robinfr',
+        it: "exact code desired by Robinfr",
         code: `
             [
                 ["thing1"],
@@ -105,7 +105,7 @@ const jsonTests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'wrap threshold through options',
+        it: "wrap threshold through options",
         code: `
             ["hello"]
         `,
@@ -114,7 +114,7 @@ const jsonTests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'line count through options',
+        it: "line count through options",
         code: `
             ["a", "b", "c", "d", "e", "f", "g", "h"]
         `,
@@ -128,11 +128,11 @@ const jsonTests: MultilineArrayTest[] = [
             ]
         `,
         options: {
-            multilineArraysLinePattern: '1 2 3',
+            multilineArraysLinePattern: "1 2 3",
         },
     },
     {
-        it: 'line count overrides threshold',
+        it: "line count overrides threshold",
         code: `
             ["a", "b", "c", "d", "e", "f", "g", "h"]
         `,
@@ -146,12 +146,12 @@ const jsonTests: MultilineArrayTest[] = [
             ]
         `,
         options: {
-            multilineArraysLinePattern: '1 2 3',
+            multilineArraysLinePattern: "1 2 3",
             multilineArraysWrapThreshold: 20,
         },
     },
     {
-        it: 'pointless wrap threshold comment',
+        it: "pointless wrap threshold comment",
         code: `
             // ${nextWrapThresholdComment} 0
             [
@@ -160,7 +160,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'leaves trailing newline',
+        it: "leaves trailing newline",
         code: `
             {
                 "import": ".cspell-base.json",
@@ -175,8 +175,11 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        /** This test is weird, it won't work if the newline before "example" isn't there. */
-        it: 'with object array element',
+        /**
+         * This test is weird, it won't work if the newline before "example"
+         * isn't there.
+         */
+        it: "with object array element",
         code: `
             {
                 "hello": "there",
@@ -188,7 +191,6 @@ const jsonTests: MultilineArrayTest[] = [
         expect: `
             {
                 "hello": "there",
-                "object": {"example": "instance"},
                 "stuff": [
                     "a",
                     "b",
@@ -198,12 +200,13 @@ const jsonTests: MultilineArrayTest[] = [
                     {
                         "example": "instance"
                     }
-                ]
+                ],
+                "object": {"example": "instance"}
             }
         `,
     },
     {
-        it: 'with nested array',
+        it: "with nested array",
         code: `
             {
                 "hello": "there",
@@ -214,7 +217,6 @@ const jsonTests: MultilineArrayTest[] = [
         expect: `
             {
                 "hello": "there",
-                "object": {"example": "instance"},
                 "stuff": [
                     "a",
                     "b",
@@ -228,7 +230,8 @@ const jsonTests: MultilineArrayTest[] = [
                         "i",
                         "j"
                     ]
-                ]
+                ],
+                "object": {"example": "instance"}
             }
         `,
         options: {
@@ -236,7 +239,7 @@ const jsonTests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'with multiple nested arrays',
+        it: "with multiple nested arrays",
         code: `
             {
                 "hello": "there",
@@ -247,7 +250,6 @@ const jsonTests: MultilineArrayTest[] = [
         expect: `
             {
                 "hello": "there",
-                "object": {"example": "instance"},
                 "stuff": [
                     "a",
                     "b",
@@ -268,7 +270,8 @@ const jsonTests: MultilineArrayTest[] = [
                         "i",
                         "j"
                     ]
-                ]
+                ],
+                "object": {"example": "instance"}
             }
         `,
         options: {
@@ -276,7 +279,7 @@ const jsonTests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'basic JSON array with a comment',
+        it: "basic JSON array with a comment",
         code: `
             {
                 "data": [
@@ -288,7 +291,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'basic JSON array with multiple comments',
+        it: "basic JSON array with multiple comments",
         code: `
             {
                 // comment
@@ -305,7 +308,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'basic JSON array with multiline comments',
+        it: "basic JSON array with multiline comments",
         code: `
             {
                 /*
@@ -346,7 +349,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'handles array with only comments GitHub Issue #75',
+        it: "handles array with only comments GitHub Issue #75",
         code: `
             {
                 "editor.codeActionsOnSave": [
@@ -358,7 +361,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'basic JSON array',
+        it: "basic JSON array",
         code: `
             {
                 "data": [
@@ -369,7 +372,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'basic lone element JSON array',
+        it: "basic lone element JSON array",
         code: `
             {
                 "data": [
@@ -380,7 +383,7 @@ const jsonTests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'keeps closing bracket on its own line for array of objects with bracketSpacing GitHub Issue #70',
+        it: "keeps closing bracket on its own line for array of objects with bracketSpacing GitHub Issue #70",
         code: `
             {
                 "test": [
@@ -397,10 +400,10 @@ const jsonTests: MultilineArrayTest[] = [
     },
 ];
 
-describe('json multiline array formatting', () => {
+describe("json multiline array formatting", () => {
     runTests({
-        extension: '.json',
+        extension: ".json",
         tests: jsonTests,
-        parser: 'json',
+        parser: "json",
     });
 });

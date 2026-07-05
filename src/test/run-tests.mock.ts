@@ -1,14 +1,15 @@
-import {assert, check} from '@augment-vir/assert';
+import { assert, check } from "@augment-vir/assert";
 import {
     omitObjectKeys,
     type PartialWithNullable,
     removeColor,
     removeNullishValues,
-} from '@augment-vir/common';
-import {it} from '@augment-vir/test';
-import {format as prettierFormat, type Options as PrettierOptions} from 'prettier';
-import {type MultilineArrayOptions} from '../options.js';
-import {repoConfig} from './prettier-config.js';
+} from "@augment-vir/common";
+import { it } from "@augment-vir/test";
+import { format as prettierFormat } from "prettier";
+import type { Options as PrettierOptions } from "prettier";
+import { type MultilineArrayOptions } from "../options.js";
+import { repoConfig } from "./prettier-config.js";
 
 async function runPrettierFormat({
     code,
@@ -18,32 +19,30 @@ async function runPrettierFormat({
 }: Readonly<{
     code: string;
     extension: string;
-    options?: (Partial<MultilineArrayOptions> & PartialWithNullable<PrettierOptions>) | undefined;
+    options?:
+        | (Partial<MultilineArrayOptions> &
+              PartialWithNullable<PrettierOptions>)
+        | undefined;
     parser: string | undefined;
 }>): Promise<string> {
-    if (extension.startsWith('.')) {
+    if (extension.startsWith(".")) {
         extension = extension.slice(1);
     }
 
-    const filepathOptions: Partial<Pick<PrettierOptions, 'filepath'>> = check.isString(
-        options.filepath,
-    )
-        ? {
-              filepath: options.filepath,
-          }
-        : 'filepath' in options
-          ? {}
-          : {
-                filepath: `blah.${extension}`,
-            };
+    const filepathOptions: Partial<Pick<PrettierOptions, "filepath">> =
+        check.isString(options.filepath)
+            ? {
+                  filepath: options.filepath,
+              }
+            : "filepath" in options
+              ? {}
+              : {
+                    filepath: `blah.${extension}`,
+                };
 
     const prettierOptions: PrettierOptions = {
         ...repoConfig,
-        ...removeNullishValues(
-            omitObjectKeys(options, [
-                'filepath',
-            ]),
-        ),
+        ...removeNullishValues(omitObjectKeys(options, ["filepath"])),
         ...filepathOptions,
         ...(parser
             ? {
@@ -59,7 +58,10 @@ export type MultilineArrayTest = {
     it: string;
     code: string;
     expect?: string | undefined;
-    options?: (Partial<MultilineArrayOptions> & PartialWithNullable<PrettierOptions>) | undefined;
+    options?:
+        | (Partial<MultilineArrayOptions> &
+              PartialWithNullable<PrettierOptions>)
+        | undefined;
     only?: true;
     skip?: true;
     failureMessage?: string;
@@ -72,11 +74,11 @@ let allPassed = true;
 function removeIndent(input: string): string {
     return (
         input
-            .replace(/^\s*\n\s*/, '')
-            .replace(/\n {12}/g, '\n')
+            .replace(/^\s*\n\s*/, "")
+            .replace(/\n {12}/g, "\n")
             // this is only used for tests
 
-            .replace(/\n[ \t]+$/, '\n')
+            .replace(/\n[ \t]+$/, "\n")
     );
 }
 
@@ -84,7 +86,11 @@ export function runTests({
     extension,
     tests,
     parser,
-}: Readonly<{extension: string; tests: MultilineArrayTest[]; parser: string}>) {
+}: Readonly<{
+    extension: string;
+    tests: MultilineArrayTest[];
+    parser: string;
+}>) {
     tests.forEach((test) => {
         async function testCallback() {
             try {
@@ -109,7 +115,10 @@ export function runTests({
                             strippedMessage,
                         });
                     }
-                    assert.strictEquals(removeColor(strippedMessage), test.failureMessage);
+                    assert.strictEquals(
+                        removeColor(strippedMessage),
+                        test.failureMessage
+                    );
                 } else {
                     throw error;
                 }
@@ -118,7 +127,6 @@ export function runTests({
 
         if (test.only) {
             forced = true;
-            // eslint-disable-next-line sonarjs/no-exclusive-tests
             it.only(test.it, testCallback);
         } else if (test.skip) {
             it.skip(test.it, testCallback);
@@ -128,10 +136,13 @@ export function runTests({
     });
 
     if (forced) {
-        // eslint-disable-next-line sonarjs/no-exclusive-tests
-        it.only('forced tests should not remain in the code', () => {
+        it.only("forced tests should not remain in the code", () => {
             if (allPassed) {
-                assert.strictEquals(forced, false, 'Only tests are not allowed.');
+                assert.strictEquals(
+                    forced,
+                    false,
+                    "Only tests are not allowed."
+                );
             }
         });
     }

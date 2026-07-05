@@ -1,24 +1,33 @@
-import {type AnyObject, getObjectTypedKeys, stringify, type Values} from '@augment-vir/common';
-import {type AstPath, type Doc, doc, type ParserOptions} from 'prettier';
-import {isDocCommand} from '../augments/doc.js';
-import {type MultilineArrayOptions} from '../options.js';
-import {walkDoc} from './child-docs.js';
+import {
+    type AnyObject,
+    getObjectTypedKeys,
+    stringify,
+    type Values,
+} from "@augment-vir/common";
+import { doc } from "prettier";
+import type { AstPath, Doc, ParserOptions } from "prettier";
+import { isDocCommand } from "../augments/doc.js";
+import { type MultilineArrayOptions } from "../options.js";
+import { walkDoc } from "./child-docs.js";
 import {
     type CommentTriggerWithEnding,
     getCommentTriggers,
     parseNextLineCounts,
-} from './comment-triggers.js';
-import {containsLeadingNewline} from './leading-new-line.js';
-import {getArrayLikeElements, isArrayLikeNode} from './supported-node-types.js';
-import {containsTrailingComma} from './trailing-comma.js';
+} from "./comment-triggers.js";
+import { containsLeadingNewline } from "./leading-new-line.js";
+import {
+    getArrayLikeElements,
+    isArrayLikeNode,
+} from "./supported-node-types.js";
+import { containsTrailingComma } from "./trailing-comma.js";
 
-const nestingSyntaxOpen = '[{(`';
-const nestingSyntaxClose = ']})`';
+const nestingSyntaxOpen = "[{(`";
+const nestingSyntaxClose = "]})`";
 const matchingNestingSyntaxClose: Record<string, string> = {
-    '[': ']',
-    '{': '}',
-    '(': ')',
-    '`': '`',
+    "[": "]",
+    "{": "}",
+    "(": ")",
+    "`": "`",
 };
 
 const found = 'Found "[" but:';
@@ -41,12 +50,12 @@ function extractIndentDoc({
 }: Readonly<{
     maybeIndentDoc: Doc | undefined;
 }>): ReturnType<typeof doc.builders.indent> | undefined {
-    if (isDocCommand(maybeIndentDoc) && maybeIndentDoc.type === 'indent') {
+    if (isDocCommand(maybeIndentDoc) && maybeIndentDoc.type === "indent") {
         return maybeIndentDoc;
     } else if (Array.isArray(maybeIndentDoc)) {
         const firstDoc = maybeIndentDoc[0];
 
-        if (isDocCommand(firstDoc) && firstDoc.type === 'indent') {
+        if (isDocCommand(firstDoc) && firstDoc.type === "indent") {
             return firstDoc;
         }
     }
@@ -68,9 +77,10 @@ export function insertLinesIntoArray({
     debug: boolean;
 }>): Doc {
     /**
-     * Each call to `insertLinesIntoArray` corresponds to a single array-like AST node, but its Doc
-     * can contain additional `[` characters that belong to sibling nodes (for example, the tuple
-     * type annotation on a destructuring pattern). Only the first `[` is our own array; skip the
+     * Each call to `insertLinesIntoArray` corresponds to a single array-like
+     * AST node, but its Doc can contain additional `[` characters that belong
+     * to sibling nodes (for example, the tuple type annotation on a
+     * destructuring pattern). Only the first `[` is our own array; skip the
      * rest so we don't rewrite unrelated brackets.
      */
     let hasProcessedOwnArray = false;
@@ -81,7 +91,7 @@ export function insertLinesIntoArray({
         callback: (currentDoc, parentDocs, childIndex): boolean => {
             const currentParent = parentDocs[0];
             const parentDoc = currentParent?.parent;
-            if (typeof currentDoc === 'string' && currentDoc.trim() === '[') {
+            if (typeof currentDoc === "string" && currentDoc.trim() === "[") {
                 if (hasProcessedOwnArray) {
                     return true;
                 }
@@ -114,18 +124,21 @@ export function insertLinesIntoArray({
                 }
                 if (childIndex !== 0) {
                     /**
-                     * This happens in some situations which we don't want to format in this plugin,
-                     * like in type accessors:
+                     * This happens in some situations which we don't want to
+                     * format in this plugin, like in type accessors:
                      *
                      * ```typescript
-                     * type mockType = exampleObject['property'];
+                     * type mockType = exampleObject["property"];
                      * ```
                      */
                     return true;
                 }
 
                 const maybeBreak = parentDoc[childIndex + 2];
-                if (isDocCommand(maybeBreak) && maybeBreak.type === 'if-break') {
+                if (
+                    isDocCommand(maybeBreak) &&
+                    maybeBreak.type === "if-break"
+                ) {
                     undoMutations.push(() => {
                         parentDoc[childIndex + 2] = maybeBreak;
                     });
@@ -133,7 +146,7 @@ export function insertLinesIntoArray({
                 }
                 const indentIndex = childIndex + 1;
                 const maybeBracketSibling =
-                    parentDoc[indentIndex] === ''
+                    parentDoc[indentIndex] === ""
                         ? parentDoc[indentIndex + 1]
                         : parentDoc[indentIndex];
                 const bracketSibling = extractIndentDoc({
@@ -144,13 +157,13 @@ export function insertLinesIntoArray({
                         bracketSibling,
                     });
                 }
-                if (maybeBracketSibling === ']') {
+                if (maybeBracketSibling === "]") {
                     return false;
                 } else if (!bracketSibling) {
                     throw new Error(
                         `${found} its sibling was not an indent Doc.: ${stringify(
-                            maybeBracketSibling,
-                        )}`,
+                            maybeBracketSibling
+                        )}`
                     );
                 }
                 const indentContents = bracketSibling.contents;
@@ -160,12 +173,16 @@ export function insertLinesIntoArray({
                     });
                 }
                 if (!Array.isArray(indentContents)) {
-                    throw new TypeError(`${found} indent didn't have array contents.`);
+                    throw new TypeError(
+                        `${found} indent didn't have array contents.`
+                    );
                 } else if (indentContents.length < 2) {
                     if (debug) {
                         console.error(stringify(indentContents));
                     }
-                    throw new Error(`${found} indent contents did not have at least 2 children`);
+                    throw new Error(
+                        `${found} indent contents did not have at least 2 children`
+                    );
                 }
 
                 const startingLine = indentContents[0];
@@ -174,15 +191,20 @@ export function insertLinesIntoArray({
                         firstIndentContentsChild: startingLine,
                     });
                 }
-                if (!isDocCommand(startingLine) || startingLine.type !== 'line') {
+                if (
+                    !isDocCommand(startingLine) ||
+                    startingLine.type !== "line"
+                ) {
                     if (Array.isArray(startingLine)) {
                         undoAllMutations();
                         return false;
                     } else {
-                        throw new TypeError(`${found} first indent child was not a line.`);
+                        throw new TypeError(
+                            `${found} first indent child was not a line.`
+                        );
                     }
                 }
-                indentContents[0] = '';
+                indentContents[0] = "";
                 undoMutations.push(() => {
                     indentContents[0] = startingLine;
                 });
@@ -196,23 +218,33 @@ export function insertLinesIntoArray({
                     });
                 }
                 if (!indentedContent) {
-                    console.error('second indent child (indentedContent) is not defined:', {
-                        indentContents,
-                        indentedContent,
-                    });
-                    throw new Error(`${found} second indent child is not a fill.`);
+                    console.error(
+                        "second indent child (indentedContent) is not defined:",
+                        {
+                            indentContents,
+                            indentedContent,
+                        }
+                    );
+                    throw new Error(
+                        `${found} second indent child is not a fill.`
+                    );
                 } else if (
                     !Array.isArray(indentedContent) &&
-                    !(isDocCommand(indentedContent) && indentedContent.type === 'fill')
+                    !(
+                        isDocCommand(indentedContent) &&
+                        indentedContent.type === "fill"
+                    )
                 ) {
                     console.error(
-                        'second indent child (indentCode) is not a fill doc or an array:',
+                        "second indent child (indentCode) is not a fill doc or an array:",
                         {
                             indentContents,
                             indentCode: indentedContent,
-                        },
+                        }
                     );
-                    throw new Error(`${found} second indent child is not a fill doc or an array.`);
+                    throw new Error(
+                        `${found} second indent child is not a fill doc or an array.`
+                    );
                 } else if (
                     Array.isArray(indentedContent)
                         ? indentedContent.length === 0
@@ -227,7 +259,7 @@ export function insertLinesIntoArray({
                 let columnCount = 1;
 
                 if (debug) {
-                    console.info('>>>>>>>>>>>>>> Walking children for commas');
+                    console.info(">>>>>>>>>>>>>> Walking children for commas");
                 }
 
                 let arrayChildCount = 0;
@@ -238,93 +270,127 @@ export function insertLinesIntoArray({
                     walkDoc({
                         startDoc: indentedContent,
                         debug,
-                        callback: (currentDoc, commaParents, commaChildIndex): boolean => {
+                        callback: (
+                            currentDoc,
+                            commaParents,
+                            commaChildIndex
+                        ): boolean => {
                             finalLineBreakExists = false;
                             const innerCurrentParent = commaParents[0];
-                            const innerCurrentParentDoc = innerCurrentParent?.parent;
+                            const innerCurrentParentDoc =
+                                innerCurrentParent?.parent;
                             if (
                                 isDocCommand(currentDoc) &&
-                                currentDoc.type === 'if-break' &&
-                                currentDoc.breakContents === ','
+                                currentDoc.type === "if-break" &&
+                                currentDoc.breakContents === ","
                             ) {
                                 /**
-                                 * Only treat a trailing-comma if-break (whose `breakContents` is
-                                 * `,`) as the array's final line-break marker. Other if-break
-                                 * commands — like the leading `| ` Prettier emits when a union type
-                                 * wraps — appear inside element docs (e.g. `[A | B | C]`) and must
-                                 * not be forced open, otherwise the inner union breaks
+                                 * Only treat a trailing-comma if-break (whose
+                                 * `breakContents` is `,`) as the array's final
+                                 * line-break marker. Other if-break commands —
+                                 * like the leading `| ` Prettier emits when a
+                                 * union type wraps — appear inside element docs
+                                 * (e.g. `[A | B | C]`) and must not be forced
+                                 * open, otherwise the inner union breaks
                                  * unnecessarily.
                                  */
                                 if (debug) {
-                                    console.info('found final line break inside of if-break');
+                                    console.info(
+                                        "found final line break inside of if-break"
+                                    );
                                 }
                                 finalLineBreakExists = true;
                                 if (!innerCurrentParentDoc) {
-                                    throw new Error('Found if-break without a parent');
-                                } else if (!Array.isArray(innerCurrentParentDoc)) {
-                                    throw new TypeError('if-break parent is not an array');
+                                    throw new Error(
+                                        "Found if-break without a parent"
+                                    );
+                                } else if (
+                                    !Array.isArray(innerCurrentParentDoc)
+                                ) {
+                                    throw new TypeError(
+                                        "if-break parent is not an array"
+                                    );
                                 } else if (commaChildIndex == undefined) {
-                                    throw new Error('if-break child index is undefined');
+                                    throw new Error(
+                                        "if-break child index is undefined"
+                                    );
                                 }
-                                innerCurrentParentDoc[commaChildIndex] = currentDoc.breakContents;
+                                innerCurrentParentDoc[commaChildIndex] =
+                                    currentDoc.breakContents;
                                 innerCurrentParentDoc.splice(
                                     commaChildIndex + 1,
                                     0,
-                                    doc.builders.breakParent,
+                                    doc.builders.breakParent
                                 );
                                 undoMutations.push(() => {
-                                    innerCurrentParentDoc.splice(commaChildIndex + 1, 1);
-                                    innerCurrentParentDoc[commaChildIndex] = currentDoc;
+                                    innerCurrentParentDoc.splice(
+                                        commaChildIndex + 1,
+                                        1
+                                    );
+                                    innerCurrentParentDoc[commaChildIndex] =
+                                        currentDoc;
                                 });
-                            } else if (typeof currentDoc === 'string') {
+                            } else if (typeof currentDoc === "string") {
                                 if (!innerCurrentParentDoc) {
                                     console.error({
                                         innerParentDoc: innerCurrentParentDoc,
                                     });
                                     throw new Error(
-                                        'Found string but innerParentDoc is not defined.',
+                                        "Found string but innerParentDoc is not defined."
                                     );
                                 } else if (
-                                    currentDoc === '<' &&
+                                    currentDoc === "<" &&
                                     Array.isArray(innerCurrentParentDoc) &&
                                     commaChildIndex != undefined &&
-                                    innerCurrentParentDoc.slice(commaChildIndex + 1).includes('>')
+                                    innerCurrentParentDoc
+                                        .slice(commaChildIndex + 1)
+                                        .includes(">")
                                 ) {
                                     /**
-                                     * A paired `<...>` in the same Doc array is a generic
-                                     * type-argument group (e.g. `Omit<MyType, 'field'>`). Skip
-                                     * walking its siblings so commas inside the generic aren't
-                                     * mistaken for array-element separators. A lone `<` or `>`
-                                     * without a match in the same array is a comparison operator
-                                     * and handled by the default walk.
+                                     * A paired `<...>` in the same Doc array is
+                                     * a generic type-argument group (e.g.
+                                     * `Omit<MyType, 'field'>`). Skip walking
+                                     * its siblings so commas inside the generic
+                                     * aren't mistaken for array-element
+                                     * separators. A lone `<` or `>` without a
+                                     * match in the same array is a comparison
+                                     * operator and handled by the default
+                                     * walk.
                                      */
                                     return false;
-                                } else if (currentDoc && nestingSyntaxOpen.includes(currentDoc)) {
+                                } else if (
+                                    currentDoc &&
+                                    nestingSyntaxOpen.includes(currentDoc)
+                                ) {
                                     if (!Array.isArray(innerCurrentParentDoc)) {
                                         throw new TypeError(
-                                            'Found opening syntax but parent is not an array.',
+                                            "Found opening syntax but parent is not an array."
                                         );
                                     }
-                                    const closingIndex = innerCurrentParentDoc.findIndex(
-                                        (sibling) =>
-                                            typeof sibling === 'string' &&
-                                            sibling &&
-                                            isMatchingNestingSyntaxClose({
-                                                maybeClose: sibling,
-                                                openingSyntax: currentDoc,
-                                            }),
-                                    );
+                                    const closingIndex =
+                                        innerCurrentParentDoc.findIndex(
+                                            (sibling) =>
+                                                typeof sibling === "string" &&
+                                                sibling &&
+                                                isMatchingNestingSyntaxClose({
+                                                    maybeClose: sibling,
+                                                    openingSyntax: currentDoc,
+                                                })
+                                        );
                                     if (closingIndex < 0) {
                                         throw new Error(
-                                            `Could not find closing match for ${currentDoc}`,
+                                            `Could not find closing match for ${currentDoc}`
                                         );
                                     }
                                     return false;
-                                } else if (currentDoc && nestingSyntaxClose.includes(currentDoc)) {
+                                } else if (
+                                    currentDoc &&
+                                    nestingSyntaxClose.includes(currentDoc)
+                                ) {
                                     throw new Error(
-                                        "Found closing syntax which shouldn't be walked",
+                                        "Found closing syntax which shouldn't be walked"
                                     );
-                                } else if (currentDoc === ',') {
+                                } else if (currentDoc === ",") {
                                     if (debug) {
                                         console.info({
                                             foundCommaIn: innerCurrentParentDoc,
@@ -332,47 +398,66 @@ export function insertLinesIntoArray({
                                     }
                                     if (!Array.isArray(innerCurrentParentDoc)) {
                                         console.error({
-                                            innerParentDoc: innerCurrentParentDoc,
+                                            innerParentDoc:
+                                                innerCurrentParentDoc,
                                         });
                                         throw new Error(
-                                            'Found comma but innerParentDoc is not an array.',
+                                            "Found comma but innerParentDoc is not an array."
                                         );
                                     } else if (commaChildIndex == undefined) {
-                                        throw new Error('Found comma but childIndex is undefined.');
+                                        throw new Error(
+                                            "Found comma but childIndex is undefined."
+                                        );
                                     }
 
-                                    let siblingIndex: number = commaChildIndex + 1;
-                                    let parentToMutate: Doc[] = innerCurrentParentDoc;
-                                    if (commaChildIndex === innerCurrentParentDoc.length - 1) {
-                                        const commaGrandParent = commaParents[1];
+                                    let siblingIndex: number =
+                                        commaChildIndex + 1;
+                                    let parentToMutate: Doc[] =
+                                        innerCurrentParentDoc;
+                                    if (
+                                        commaChildIndex ===
+                                        innerCurrentParentDoc.length - 1
+                                    ) {
+                                        const commaGrandParent =
+                                            commaParents[1];
                                         if (commaGrandParent == undefined) {
                                             throw new Error(
-                                                'Could not find grandparent of comma group.',
+                                                "Could not find grandparent of comma group."
                                             );
                                         } else if (
-                                            commaGrandParent.childIndexInThisParent == undefined
+                                            commaGrandParent.childIndexInThisParent ==
+                                            undefined
                                         ) {
                                             throw new Error(
-                                                'Could not find index of comma group parent',
+                                                "Could not find index of comma group parent"
                                             );
-                                        } else if (!Array.isArray(commaGrandParent.parent)) {
+                                        } else if (
+                                            !Array.isArray(
+                                                commaGrandParent.parent
+                                            )
+                                        ) {
                                             throw new TypeError(
-                                                'Comma group grandparent is not an array.',
+                                                "Comma group grandparent is not an array."
                                             );
                                         }
-                                        siblingIndex = commaGrandParent.childIndexInThisParent + 1;
-                                        parentToMutate = commaGrandParent.parent;
+                                        siblingIndex =
+                                            commaGrandParent.childIndexInThisParent +
+                                            1;
+                                        parentToMutate =
+                                            commaGrandParent.parent;
                                     }
 
                                     if (debug) {
                                         console.info({
-                                            commaParentDoc: innerCurrentParentDoc,
+                                            commaParentDoc:
+                                                innerCurrentParentDoc,
                                             parentToMutate,
                                             siblingIndex,
                                         });
                                     }
 
-                                    let maybeCommaSibling = parentToMutate[siblingIndex];
+                                    let maybeCommaSibling =
+                                        parentToMutate[siblingIndex];
 
                                     if (debug) {
                                         console.info(
@@ -380,20 +465,21 @@ export function insertLinesIntoArray({
                                             stringify({
                                                 parentToMutate,
                                                 maybeCommaSibling,
-                                            }),
+                                            })
                                         );
                                     }
 
                                     function isCommaSibling(
-                                        maybe: doc.builders.Doc | undefined,
+                                        maybe: doc.builders.Doc | undefined
                                     ): maybe is
                                         | doc.builders.DocCommand
                                         | [doc.builders.DocCommand] {
                                         return (
-                                            (isDocCommand(maybe) && maybe.type === 'line') ||
+                                            (isDocCommand(maybe) &&
+                                                maybe.type === "line") ||
                                             (Array.isArray(maybe) &&
                                                 isDocCommand(maybe[0]) &&
-                                                maybe[0].type === 'line')
+                                                maybe[0].type === "line")
                                         );
                                     }
 
@@ -402,12 +488,13 @@ export function insertLinesIntoArray({
                                         siblingIndex < parentToMutate.length
                                     ) {
                                         siblingIndex++;
-                                        maybeCommaSibling = parentToMutate[siblingIndex];
+                                        maybeCommaSibling =
+                                            parentToMutate[siblingIndex];
                                         if (debug) {
                                             console.info(
                                                 `Trying to find comma sibling at index ${siblingIndex}`,
                                                 parentToMutate,
-                                                maybeCommaSibling,
+                                                maybeCommaSibling
                                             );
                                         }
                                     }
@@ -416,56 +503,65 @@ export function insertLinesIntoArray({
                                         console.info(
                                             `Found comma sibling at index ${siblingIndex}`,
                                             parentToMutate,
-                                            maybeCommaSibling,
+                                            maybeCommaSibling
                                         );
                                     }
 
                                     if (!isCommaSibling(maybeCommaSibling)) {
                                         throw new Error(
                                             `Found comma but its following sibling is not a line: ${stringify(
-                                                maybeCommaSibling,
-                                            )}`,
+                                                maybeCommaSibling
+                                            )}`
                                         );
                                     }
                                     const commaSibling = maybeCommaSibling;
 
-                                    const currentLineCountIndex = lineIndex % lineCounts.length;
-                                    const currentLineCount: number | undefined = lineCounts.length
-                                        ? lineCounts[currentLineCountIndex]
-                                        : undefined;
+                                    const currentLineCountIndex =
+                                        lineIndex % lineCounts.length;
+                                    const currentLineCount: number | undefined =
+                                        lineCounts.length
+                                            ? lineCounts[currentLineCountIndex]
+                                            : undefined;
                                     arrayChildCount++;
                                     if (
-                                        (currentLineCount && columnCount === currentLineCount) ||
+                                        (currentLineCount &&
+                                            columnCount === currentLineCount) ||
                                         !currentLineCount
                                     ) {
                                         // if we're on the last element of the line then increment to the next line
                                         lineIndex++;
                                         columnCount = 1;
                                         /**
-                                         * Don't use doc.builders.hardline here. It causes "invalid
-                                         * size error" which I don't understand and which has no
-                                         * other useful information or stack trace.
+                                         * Don't use doc.builders.hardline here.
+                                         * It causes "invalid size error" which
+                                         * I don't understand and which has no
+                                         * other useful information or stack
+                                         * trace.
                                          */
                                         if (debug) {
                                             console.info({
-                                                breakingAfter: parentToMutate[siblingIndex - 1],
+                                                breakingAfter:
+                                                    parentToMutate[
+                                                        siblingIndex - 1
+                                                    ],
                                             });
                                         }
                                         parentToMutate[siblingIndex] =
                                             doc.builders.hardlineWithoutBreakParent;
                                     } else {
-                                        parentToMutate[siblingIndex] = ' ';
+                                        parentToMutate[siblingIndex] = " ";
                                         columnCount++;
                                     }
                                     undoMutations.push(() => {
-                                        parentToMutate[siblingIndex] = commaSibling;
+                                        parentToMutate[siblingIndex] =
+                                            commaSibling;
                                     });
                                 }
                             } else if (Array.isArray(currentDoc)) {
                                 const firstPart = currentDoc[0];
                                 const secondPart = currentDoc[1];
                                 if (debug) {
-                                    console.info('got concat child doc');
+                                    console.info("got concat child doc");
                                     console.info(currentDoc, {
                                         firstPart,
                                         secondPart,
@@ -473,25 +569,30 @@ export function insertLinesIntoArray({
                                     console.info(
                                         isDocCommand(firstPart),
                                         isDocCommand(secondPart),
-                                        (firstPart as any)?.type === 'line',
+                                        (firstPart as any)?.type === "line",
                                         (firstPart as any)?.hard,
-                                        (secondPart as any)?.type === 'break-parent',
+                                        (secondPart as any)?.type ===
+                                            "break-parent"
                                     );
                                 }
                                 if (
                                     isDocCommand(firstPart) &&
                                     isDocCommand(secondPart) &&
-                                    firstPart.type === 'line' &&
+                                    firstPart.type === "line" &&
                                     firstPart.hard &&
-                                    secondPart.type === 'break-parent'
+                                    secondPart.type === "break-parent"
                                 ) {
                                     if (debug) {
-                                        console.info('concat child was indeed a line break');
+                                        console.info(
+                                            "concat child was indeed a line break"
+                                        );
                                     }
                                     forceFinalLineBreakExists = true;
                                     return false;
                                 } else if (debug) {
-                                    console.info('concat child doc was not a line break');
+                                    console.info(
+                                        "concat child doc was not a line break"
+                                    );
                                 }
                             }
                             return true;
@@ -506,23 +607,30 @@ export function insertLinesIntoArray({
                 if (!finalLineBreakExists) {
                     if (debug) {
                         console.info(
-                            `Parsed all array children but finalBreakHappened = ${finalLineBreakExists}`,
+                            `Parsed all array children but finalBreakHappened = ${finalLineBreakExists}`
                         );
                     }
 
-                    const closingBracketIndex: number = parentDoc.indexOf(']');
+                    const closingBracketIndex: number = parentDoc.indexOf("]");
                     const preBracketChild = parentDoc[closingBracketIndex - 1];
-                    if (isDocCommand(preBracketChild) && preBracketChild.type === 'line') {
+                    if (
+                        isDocCommand(preBracketChild) &&
+                        preBracketChild.type === "line"
+                    ) {
                         parentDoc.splice(closingBracketIndex - 1, 1);
                         undoMutations.push(() => {
-                            parentDoc.splice(closingBracketIndex - 1, 0, preBracketChild);
+                            parentDoc.splice(
+                                closingBracketIndex - 1,
+                                0,
+                                preBracketChild
+                            );
                         });
                     }
 
                     parentDoc.splice(
                         closingBracketIndex - 1,
                         0,
-                        doc.builders.hardlineWithoutBreakParent,
+                        doc.builders.hardlineWithoutBreakParent
                     );
                     undoMutations.push(() => {
                         parentDoc.splice(closingBracketIndex - 1, 1);
@@ -537,7 +645,7 @@ export function insertLinesIntoArray({
                         doc.builders.group([
                             doc.builders.hardlineWithoutBreakParent,
                             ...indentedContent,
-                        ]),
+                        ])
                     );
                     undoMutations.push(() => {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -556,7 +664,11 @@ export function insertLinesIntoArray({
                     });
                 }
 
-                if (arrayChildCount < wrapThreshold && !lineCounts.length && !manualWrap) {
+                if (
+                    arrayChildCount < wrapThreshold &&
+                    !lineCounts.length &&
+                    !manualWrap
+                ) {
                     undoAllMutations();
                 }
 
@@ -575,7 +687,7 @@ export function insertLinesIntoArray({
     });
 
     if (debug) {
-        console.info('final doc:', stringify(inputDoc));
+        console.info("final doc:", stringify(inputDoc));
     }
 
     // return what is input because we perform mutations on it
@@ -584,7 +696,7 @@ export function insertLinesIntoArray({
 
 function getLatestSetValue<T extends object>(
     currentLine: number,
-    triggers: CommentTriggerWithEnding<T>,
+    triggers: CommentTriggerWithEnding<T>
 ): Values<T> | undefined {
     const relevantSetLineCountsKey: keyof T = getObjectTypedKeys(triggers)
         .sort()
@@ -592,8 +704,7 @@ function getLatestSetValue<T extends object>(
             (closestKey, currentKey): keyof T => {
                 if (Number(currentKey) < currentLine) {
                     const currentData = triggers[currentKey] as
-                        | CommentTriggerWithEnding<T>[keyof T]
-                        | undefined;
+                        CommentTriggerWithEnding<T>[keyof T] | undefined;
 
                     if (currentData && currentData.lineEnd > currentLine) {
                         return currentKey;
@@ -602,11 +713,11 @@ function getLatestSetValue<T extends object>(
 
                 return closestKey;
             },
-            '' as keyof T,
+            "" as keyof T
         );
-    const relevantSetLineCount = (triggers as AnyObject)[relevantSetLineCountsKey as any]?.data as
-        | Values<T>
-        | undefined;
+    const relevantSetLineCount = (triggers as AnyObject)[
+        relevantSetLineCountsKey as any
+    ]?.data as Values<T> | undefined;
 
     return relevantSetLineCount;
 }
@@ -625,13 +736,16 @@ export function printWithMultilineArrays({
     const rootNode = path.stack[0];
     if (!rootNode) {
         throw new Error(
-            `Could not find valid root node in ${path.stack.map((entry) => entry.type).join(',')}`,
+            `Could not find valid root node in ${path.stack.map((entry) => entry.type).join(",")}`
         );
     }
     const node = path.getNode();
 
     if (debug) {
-        console.info('[multiline-arrays] printWithMultilineArrays node type:', node?.type);
+        console.info(
+            "[multiline-arrays] printWithMultilineArrays node type:",
+            node?.type
+        );
     }
 
     if (node && isArrayLikeNode(node)) {
@@ -642,16 +756,21 @@ export function printWithMultilineArrays({
         const commentTriggers = getCommentTriggers(rootNode, debug);
 
         const originalText: string = inputOptions.originalText;
-        const splitOriginalText: string[] = originalText.split('\n');
+        const splitOriginalText: string[] = originalText.split("\n");
 
         /**
-         * ArrayPattern nodes in Babel-TS include their `typeAnnotation` in the node's `loc`, so the
-         * node's end location can be well past the array's `]`. Use the typeAnnotation's start
-         * (when present) as the effective end so trailing-comma / leading-newline detection only
-         * inspects text inside the actual array brackets.
+         * ArrayPattern nodes in Babel-TS include their `typeAnnotation` in the
+         * node's `loc`, so the node's end location can be well past the array's
+         * `]`. Use the typeAnnotation's start (when present) as the effective
+         * end so trailing-comma / leading-newline detection only inspects text
+         * inside the actual array brackets.
          */
         const typeAnnotationStart = (
-            node as {typeAnnotation?: {loc?: {start: {line: number; column: number}}}}
+            node as {
+                typeAnnotation?: {
+                    loc?: { start: { line: number; column: number } };
+                };
+            }
         ).typeAnnotation?.loc?.start;
         const arrayLoc = typeAnnotationStart
             ? {
@@ -676,7 +795,7 @@ export function printWithMultilineArrays({
 
         const relevantSetLineCount: number[] | undefined = getLatestSetValue(
             currentLineNumber,
-            commentTriggers.setLineCounts,
+            commentTriggers.setLineCounts
         );
 
         const lineCounts: number[] =
@@ -690,7 +809,7 @@ export function printWithMultilineArrays({
 
         const relevantSetWrapCommentThreshold = getLatestSetValue(
             currentLineNumber,
-            commentTriggers.setWrapThresholds,
+            commentTriggers.setWrapThresholds
         );
 
         const wrapThreshold: number =
@@ -702,10 +821,13 @@ export function printWithMultilineArrays({
 
         const includesCommentTrigger: boolean =
             (commentTriggers.nextWrapThresholds[currentLineNumber] ??
-                relevantSetWrapCommentThreshold) != undefined || !!lineCounts.length;
+                relevantSetWrapCommentThreshold) != undefined ||
+            !!lineCounts.length;
 
         if (debug) {
-            console.info(`======= Starting call to ${insertLinesIntoArray.name}: =======`);
+            console.info(
+                `======= Starting call to ${insertLinesIntoArray.name}: =======`
+            );
             console.info({
                 options: {
                     lineCounts,

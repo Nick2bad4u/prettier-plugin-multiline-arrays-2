@@ -1,12 +1,12 @@
-import {type BaseNode} from 'estree';
-import {extractTextBetweenRanges} from '../augments/array.js';
+import type { BaseNode } from "estree";
+import { extractTextBetweenRanges } from "../augments/array.js";
 
 export function containsTrailingComma({
     nodeLocation,
     children,
     originalLines,
 }: Readonly<{
-    nodeLocation: BaseNode['loc'];
+    nodeLocation: BaseNode["loc"];
     children: (BaseNode | null)[];
     originalLines: string[];
 }>): boolean {
@@ -31,7 +31,7 @@ export function containsTrailingComma({
             },
         });
 
-        if (textPastLastElement.includes(',')) {
+        if (textPastLastElement.includes(",")) {
             return true;
         }
     }

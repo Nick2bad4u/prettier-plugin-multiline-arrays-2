@@ -1,0 +1,32 @@
+---
+version: 2
+updates:
+    - package-ecosystem: "npm"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "09:00"
+          timezone: "America/New_York"
+      target-branch: "dev"
+      assignees:
+          - "Nick2bad4u"
+      reviewers:
+          - "Nick2bad4u"
+      labels:
+          - "dependencies"
+      open-pull-requests-limit: 5
+      versioning-strategy: "increase"
+      commit-message:
+          prefix: "chore"
+          prefix-development: "chore"
+          include: "scope"
+      cooldown:
+          default-days: 5
+          semver-major-days: 30
+          semver-minor-days: 7
+          semver-patch-days: 3
+      groups:
+          npm:
+              patterns:
+                  - "*"

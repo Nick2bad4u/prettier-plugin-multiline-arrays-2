@@ -1,10 +1,11 @@
-import {type Doc} from 'prettier';
+import type { Doc } from "prettier";
 
-type Parents = {parent: Doc; childIndexInThisParent: number | undefined};
+type Parents = { parent: Doc; childIndexInThisParent: number | undefined };
 
 /**
- * @returns Boolean true means keep walking children and siblings, false means stop walking children
- *   and siblings. Returning false does not stop walking of aunts/uncles or ancestors.
+ * @returns Boolean true means keep walking children and siblings, false means
+ *   stop walking children and siblings. Returning false does not stop walking
+ *   of aunts/uncles or ancestors.
  */
 export function walkDoc({
     startDoc,
@@ -18,7 +19,7 @@ export function walkDoc({
     callback: (
         currentDoc: Doc,
         parents: Parents[],
-        index: number | undefined,
+        index: number | undefined
     ) => boolean | void | undefined;
     parents?: Parents[];
     index?: number | undefined;
@@ -30,7 +31,7 @@ export function walkDoc({
         const parent = parents[0];
         console.info({
             firingCallbackFor: startDoc,
-            status: 'Calling callback',
+            status: "Calling callback",
             parent: parent
                 ? {
                       isArray: Array.isArray(parent),
@@ -43,11 +44,11 @@ export function walkDoc({
     if (!callback(startDoc, parents, index)) {
         // if the callback returns something falsy, don't try to walk its children
         return false;
-    } else if (typeof startDoc === 'string') {
+    } else if (typeof startDoc === "string") {
         return true;
     } else if (Array.isArray(startDoc)) {
         if (debug) {
-            console.info('walking array children');
+            console.info("walking array children");
         }
         // one a child returns false, abort walking this array
         startDoc.every((innerDoc, index): boolean => {
@@ -65,9 +66,9 @@ export function walkDoc({
                 index,
             });
         });
-    } else if ('contents' in startDoc) {
+    } else if ("contents" in startDoc) {
         if (debug) {
-            console.info('walking contents property');
+            console.info("walking contents property");
         }
         return walkDoc({
             startDoc: startDoc.contents,
@@ -82,9 +83,9 @@ export function walkDoc({
             ],
             index: undefined,
         });
-    } else if ('parts' in startDoc) {
+    } else if ("parts" in startDoc) {
         if (debug) {
-            console.info('walking parts property');
+            console.info("walking parts property");
         }
         return walkDoc({
             startDoc: startDoc.parts,

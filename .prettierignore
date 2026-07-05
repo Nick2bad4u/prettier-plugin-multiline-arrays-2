@@ -1,5 +1,6 @@
 *.snapshot.web.mjs
 **/.history/
+**/.cache/
 **/all-files-for-code-coverage.test.ts
 **/coverage/
 **/dist-*/

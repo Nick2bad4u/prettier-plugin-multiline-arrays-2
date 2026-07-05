@@ -1,17 +1,41 @@
 {
+    "$schema": "https://json.schemastore.org/tsconfig",
     "compilerOptions": {
-        "outDir": "./dist/",
-        "rootDir": "./src/"
+        "allowSyntheticDefaultImports": true,
+        "declaration": true,
+        "declarationMap": false,
+        "esModuleInterop": true,
+        "exactOptionalPropertyTypes": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "lib": [
+            "ES2023",
+            "DOM"
+        ],
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "noEmit": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noUncheckedIndexedAccess": true,
+        "outDir": "./dist",
+        "resolveJsonModule": true,
+        "rootDir": "./src",
+        "skipLibCheck": true,
+        "strict": true,
+        "target": "ES2023",
+        "types": [
+            "node"
+        ],
+        "verbatimModuleSyntax": true
     },
     "exclude": [
-        "./configs/",
-        "./coverage/",
-        "./dist-*/",
-        "./dist/",
-        "./node_modules/",
-        "./test-files/",
-        "eslint.config.ts",
-        "src/all-files-for-code-coverage.test.ts"
+        "coverage",
+        "dist",
+        "node_modules"
     ],
-    "extends": "@virmator/compile/configs/tsconfig.base.json"
+    "include": [
+        "src/**/*.ts"
+    ]
 }

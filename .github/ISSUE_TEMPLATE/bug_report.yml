@@ -1,0 +1,27 @@
+---
+name: "Bug report"
+description: "Report a formatting problem"
+title: "[Bug]: "
+labels:
+    - "bug"
+body:
+    - type: "textarea"
+      id: "input"
+      attributes:
+          label: "Input"
+          description: "Minimal code or JSON that reproduces the issue."
+      validations:
+          required: true
+    - type: "textarea"
+      id: "output"
+      attributes:
+          label: "Actual output"
+      validations:
+          required: true
+    - type: "input"
+      id: "versions"
+      attributes:
+          label: "Versions"
+          placeholder: "prettier 3.9.4, prettier-plugin-multiline-arrays-2 1.0.0"
+      validations:
+          required: true

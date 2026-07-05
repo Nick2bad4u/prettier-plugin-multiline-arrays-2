@@ -1,6 +1,6 @@
-import {check} from '@augment-vir/assert';
-import {getObjectTypedKeys} from '@augment-vir/common';
-import {type Comment, type Node} from 'estree';
+import { check } from "@augment-vir/assert";
+import { getObjectTypedKeys } from "@augment-vir/common";
+import type { Comment, Node } from "estree";
 import {
     nextLinePatternComment,
     nextWrapThresholdComment,
@@ -11,15 +11,15 @@ import {
     untilNextWrapThresholdCommentRegExp,
     untilSetLinePatternCommentRegExp,
     untilSetWrapThresholdCommentRegExp,
-} from '../options.js';
-import {extractComments} from './comments.js';
-import {isArrayLikeNode} from './supported-node-types.js';
+} from "../options.js";
+import { extractComments } from "./comments.js";
+import { isArrayLikeNode } from "./supported-node-types.js";
 
-type LineNumberDetails<T> = {[lineNumber: string]: T};
+type LineNumberDetails<T> = { [lineNumber: string]: T };
 export type LineCounts = LineNumberDetails<number[]>;
 export type WrapThresholds = LineNumberDetails<number>;
 export type CommentTriggerWithEnding<T> = {
-    [P in keyof T]: {data: T[P]; lineEnd: number};
+    [P in keyof T]: { data: T[P]; lineEnd: number };
 };
 
 export type CommentTriggers = {
@@ -36,22 +36,22 @@ type InternalCommentTriggers = CommentTriggers & {
 const mappedCommentTriggers = new WeakMap<Node, CommentTriggers>();
 
 const ignoredAstChildKeys: string[] = [
-    'comments',
-    'leadingComments',
-    'loc',
-    'range',
-    'raw',
-    'tokens',
-    'trailingComments',
-    'value',
+    "comments",
+    "leadingComments",
+    "loc",
+    "range",
+    "raw",
+    "tokens",
+    "trailingComments",
+    "value",
 ];
 
 const descendantBoundaryTypes: string[] = [
-    'ArrowFunctionExpression',
-    'ClassDeclaration',
-    'ClassExpression',
-    'FunctionDeclaration',
-    'FunctionExpression',
+    "ArrowFunctionExpression",
+    "ClassDeclaration",
+    "ClassExpression",
+    "FunctionDeclaration",
+    "FunctionExpression",
 ];
 
 export function getCommentTriggers(key: Node, debug: boolean): CommentTriggers {
@@ -81,10 +81,14 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
 
     const internalCommentTriggers: InternalCommentTriggers = comments.reduce(
         (accum: InternalCommentTriggers, currentComment) => {
-            const commentText = (currentComment.value as string | undefined)?.replace(/\n/g, ' ');
+            const commentText = (
+                currentComment.value as string | undefined
+            )?.replace(/\n/g, " ");
 
             if (!currentComment.loc) {
-                throw new Error(`Cannot read line location for comment ${currentComment.value}`);
+                throw new Error(
+                    `Cannot read line location for comment ${currentComment.value}`
+                );
             }
 
             const nextLineCounts = getLineCounts({
@@ -93,12 +97,14 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
                 debug,
             });
             if (nextLineCounts.length) {
-                accum.nextLineCounts[currentComment.loc.end.line] = nextLineCounts;
+                accum.nextLineCounts[currentComment.loc.end.line] =
+                    nextLineCounts;
             }
 
             const nextWrapThreshold = getWrapThreshold(commentText, true);
             if (nextWrapThreshold != undefined) {
-                accum.nextWrapThresholds[currentComment.loc.end.line] = nextWrapThreshold;
+                accum.nextWrapThresholds[currentComment.loc.end.line] =
+                    nextWrapThreshold;
             }
 
             const setLineCounts = getLineCounts({
@@ -128,7 +134,7 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
 
             return accum;
         },
-        starterTriggers,
+        starterTriggers
     );
 
     internalCommentTriggers.resets.sort();
@@ -190,7 +196,7 @@ function mapNextLineTriggers<T>({
                 [targetLineNumber]: trigger,
             };
         },
-        {},
+        {}
     );
 }
 
@@ -248,9 +254,7 @@ function findArrayLikeDescendantLines({
             return [];
         }
 
-        return [
-            node.loc.start.line,
-        ];
+        return [node.loc.start.line];
     });
 }
 
@@ -263,7 +267,8 @@ function collectAstNodes({
 }: Readonly<{
     input: unknown;
     shouldInclude: (node: Node, isRootNode: boolean) => boolean;
-    shouldWalkChildren?: ((node: Node, isRootNode: boolean) => boolean) | undefined;
+    shouldWalkChildren?:
+        ((node: Node, isRootNode: boolean) => boolean) | undefined;
     seenInputs?: WeakSet<object> | undefined;
     isRootNode?: boolean | undefined;
 }>): Node[] {
@@ -289,11 +294,7 @@ function collectAstNodes({
         return [];
     }
 
-    const matchingNode = shouldInclude(input, isRootNode)
-        ? [
-              input,
-          ]
-        : [];
+    const matchingNode = shouldInclude(input, isRootNode) ? [input] : [];
     const childNodes = shouldWalkChildren(input, isRootNode)
         ? getObjectTypedKeys(input).flatMap((nodeKey) => {
               if (ignoredAstChildKeys.includes(String(nodeKey))) {
@@ -310,10 +311,7 @@ function collectAstNodes({
           })
         : [];
 
-    return [
-        ...matchingNode,
-        ...childNodes,
-    ];
+    return [...matchingNode, ...childNodes];
 }
 
 function isAstNode(input: object): input is Node {
@@ -325,35 +323,47 @@ function setResets(internalCommentTriggers: InternalCommentTriggers): void {
         return;
     }
 
-    const setLineCountLineNumbers = getObjectTypedKeys(internalCommentTriggers.setLineCounts);
+    const setLineCountLineNumbers = getObjectTypedKeys(
+        internalCommentTriggers.setLineCounts
+    );
     if (setLineCountLineNumbers.length) {
         setLineCountLineNumbers.forEach((lineNumber) => {
-            const currentLineNumberStats = internalCommentTriggers.setLineCounts[lineNumber];
+            const currentLineNumberStats =
+                internalCommentTriggers.setLineCounts[lineNumber];
             if (!currentLineNumberStats) {
                 throw new Error(
                     `Line number stats were undefined for "${lineNumber}" in "${JSON.stringify(
-                        internalCommentTriggers.setLineCounts,
-                    )}"`,
+                        internalCommentTriggers.setLineCounts
+                    )}"`
                 );
             }
             const endLineNumber: number =
-                internalCommentTriggers.resets.find((resetLineNumber): boolean => {
-                    return Number(lineNumber) < resetLineNumber;
-                }) ?? currentLineNumberStats.lineEnd;
+                internalCommentTriggers.resets.find(
+                    (resetLineNumber): boolean => {
+                        return Number(lineNumber) < resetLineNumber;
+                    }
+                ) ?? currentLineNumberStats.lineEnd;
 
             currentLineNumberStats.lineEnd = endLineNumber;
         });
     }
 }
 
-function getWrapThreshold(commentText: string | undefined, nextOnly: boolean): number | undefined {
-    const searchText = nextOnly ? nextWrapThresholdComment : setWrapThresholdComment;
+function getWrapThreshold(
+    commentText: string | undefined,
+    nextOnly: boolean
+): number | undefined {
+    const searchText = nextOnly
+        ? nextWrapThresholdComment
+        : setWrapThresholdComment;
     const searchRegExp = nextOnly
         ? untilNextWrapThresholdCommentRegExp
         : untilSetWrapThresholdCommentRegExp;
 
     if (commentText?.toLowerCase().includes(searchText)) {
-        const thresholdValue = Number(commentText.toLowerCase().replace(searchRegExp, '').trim());
+        const thresholdValue = Number(
+            commentText.toLowerCase().replace(searchRegExp, "").trim()
+        );
         if (isNaN(thresholdValue)) {
             return undefined;
         } else {
@@ -368,7 +378,7 @@ export function parseNextLineCounts({
     input,
     nextOnly,
     debug,
-}: Readonly<{input: string; nextOnly: boolean; debug: boolean}>): number[] {
+}: Readonly<{ input: string; nextOnly: boolean; debug: boolean }>): number[] {
     if (!input) {
         return [];
     }
@@ -379,28 +389,28 @@ export function parseNextLineCounts({
 
     const split = input
         .toLowerCase()
-        .replace(searchRegExp, '')
-        .replace(/,/g, '')
-        .split(' ')
+        .replace(searchRegExp, "")
+        .replace(/,/g, "")
+        .split(" ")
         .filter((entry) => !!entry);
 
     const firstSplit = split[0];
-    if (firstSplit === '[') {
+    if (firstSplit === "[") {
         split.splice(0, 1);
-    } else if (firstSplit?.startsWith('[')) {
-        split[0] = firstSplit.replace(/^\[/, '');
+    } else if (firstSplit?.startsWith("[")) {
+        split[0] = firstSplit.replace(/^\[/, "");
     }
 
     const lastSplitIndex = split.length - 1;
     const lastSplit = split[lastSplitIndex];
-    if (lastSplit === ']') {
+    if (lastSplit === "]") {
         split.splice(split.length - 1, 1);
-    } else if (lastSplit?.endsWith(']')) {
-        split[lastSplitIndex] = lastSplit.replace(/\]$/, '');
+    } else if (lastSplit?.endsWith("]")) {
+        split[lastSplitIndex] = lastSplit.replace(/\]$/, "");
     }
 
     const numbers = split.map((entry) =>
-        entry && !!entry.trim().match(/^\d+$/) ? Number(entry.trim()) : NaN,
+        entry && !!entry.trim().match(/^\d+$/) ? Number(entry.trim()) : NaN
     );
 
     const invalidNumbers = numbers
@@ -430,13 +440,13 @@ export function parseNextLineCounts({
                         match: entry.original?.trim().match(/^\d+$/),
                         matched: !!entry.original?.trim().match(/^\d+$/),
                     };
-                }),
+                })
             );
         }
         console.error(
             `Invalid number(s) for elements per line option/comment: ${invalidNumbers
                 .map((entry) => entry.original)
-                .join()}`,
+                .join()}`
         );
         return [];
     }
@@ -451,8 +461,14 @@ function getLineCounts({
     commentText,
     nextOnly,
     debug,
-}: Readonly<{commentText: string | undefined; nextOnly: boolean; debug: boolean}>): number[] {
-    const searchText = nextOnly ? nextLinePatternComment : setLinePatternComment;
+}: Readonly<{
+    commentText: string | undefined;
+    nextOnly: boolean;
+    debug: boolean;
+}>): number[] {
+    const searchText = nextOnly
+        ? nextLinePatternComment
+        : setLinePatternComment;
 
     if (commentText?.toLowerCase().includes(searchText)) {
         return parseNextLineCounts({

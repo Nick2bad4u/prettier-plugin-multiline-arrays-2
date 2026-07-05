@@ -1,0 +1,15 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "compilerOptions": {
+        "noEmit": false
+    },
+    "exclude": [
+        "coverage",
+        "dist",
+        "node_modules",
+        "src/**/*.mock.ts",
+        "src/**/*.test.ts",
+        "src/readme-examples/**/*.ts"
+    ],
+    "extends": "./tsconfig.json"
+}

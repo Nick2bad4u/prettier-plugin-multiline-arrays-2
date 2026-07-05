@@ -1,10 +1,10 @@
-import {describe} from '@augment-vir/test';
-import {nextWrapThresholdComment} from '../options.js';
-import {type MultilineArrayTest, runTests} from './run-tests.mock.js';
+import { describe } from "@augment-vir/test";
+import { nextWrapThresholdComment } from "../options.js";
+import { type MultilineArrayTest, runTests } from "./run-tests.mock.js";
 
 const json5Tests: MultilineArrayTest[] = [
     {
-        it: 'basic JSON format',
+        it: "basic JSON format",
         code: `
             {
                 hello: 'there',
@@ -30,25 +30,25 @@ const json5Tests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'basic wrap threshold comment',
+        it: "basic wrap threshold comment",
         code: `
             // ${nextWrapThresholdComment} 3
             ['hello']
         `,
     },
     {
-        it: 'invalid wrap threshold triggers error',
+        it: "invalid wrap threshold triggers error",
         code: `
             ['hello']
         `,
         options: {
-            multilineArraysWrapThreshold: 'fifty two' as any,
+            multilineArraysWrapThreshold: "fifty two" as any,
         },
         failureMessage:
             'Invalid multilineArraysWrapThreshold value. Expected an integer, but received "fifty two".',
     },
     {
-        it: 'wrap threshold through options',
+        it: "wrap threshold through options",
         code: `
             ['hello']
         `,
@@ -57,7 +57,7 @@ const json5Tests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'line count through options',
+        it: "line count through options",
         code: `
             ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
         `,
@@ -71,11 +71,11 @@ const json5Tests: MultilineArrayTest[] = [
             ]
         `,
         options: {
-            multilineArraysLinePattern: '1 2 3',
+            multilineArraysLinePattern: "1 2 3",
         },
     },
     {
-        it: 'line count overrides threshold',
+        it: "line count overrides threshold",
         code: `
             ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
         `,
@@ -89,12 +89,12 @@ const json5Tests: MultilineArrayTest[] = [
             ]
         `,
         options: {
-            multilineArraysLinePattern: '1 2 3',
+            multilineArraysLinePattern: "1 2 3",
             multilineArraysWrapThreshold: 20,
         },
     },
     {
-        it: 'pointless wrap threshold comment',
+        it: "pointless wrap threshold comment",
         code: `
             // ${nextWrapThresholdComment} 0
             [
@@ -103,7 +103,7 @@ const json5Tests: MultilineArrayTest[] = [
         `,
     },
     {
-        it: 'with object array element',
+        it: "with object array element",
         code: `
             {
                 hello: 'there',
@@ -130,7 +130,7 @@ const json5Tests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'with nested array',
+        it: "with nested array",
         code: `
             {
                 hello: 'there',
@@ -163,7 +163,7 @@ const json5Tests: MultilineArrayTest[] = [
         },
     },
     {
-        it: 'with multiple nested arrays',
+        it: "with multiple nested arrays",
         code: `
             {
                 hello: 'there',
@@ -204,10 +204,10 @@ const json5Tests: MultilineArrayTest[] = [
     },
 ];
 
-describe('json5 multiline array formatting', () => {
+describe("json5 multiline array formatting", () => {
     runTests({
-        extension: '.json',
+        extension: ".json",
         tests: json5Tests,
-        parser: 'json5',
+        parser: "json5",
     });
 });

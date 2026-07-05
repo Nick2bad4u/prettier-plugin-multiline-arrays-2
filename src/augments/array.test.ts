@@ -1,16 +1,16 @@
-import {assert} from '@augment-vir/assert';
-import {describe, it} from '@augment-vir/test';
-import {extractTextBetweenRanges} from './array.js';
+import { assert } from "@augment-vir/assert";
+import { describe, it } from "@augment-vir/test";
+import { extractTextBetweenRanges } from "./array.js";
 
 describe(extractTextBetweenRanges.name, () => {
-    it('extracts text from multiple lines', () => {
+    it("extracts text from multiple lines", () => {
         assert.strictEquals(
             extractTextBetweenRanges(
                 [
-                    'a b c d e f g h i j k l m n',
-                    'o p q r s',
-                    't u v w x y',
-                    'z',
+                    "a b c d e f g h i j k l m n",
+                    "o p q r s",
+                    "t u v w x y",
+                    "z",
                 ],
                 {
                     start: {
@@ -21,15 +21,15 @@ describe(extractTextBetweenRanges.name, () => {
                         line: 2,
                         column: 3,
                     },
-                },
+                }
             ),
-            ' d e f g h i j k l m n\no p q r s\nt u',
+            " d e f g h i j k l m n\no p q r s\nt u"
         );
     });
 
-    it('extracts text from the same line', () => {
+    it("extracts text from the same line", () => {
         assert.strictEquals(
-            extractTextBetweenRanges(['a b c d e f g h i j k l m n'], {
+            extractTextBetweenRanges(["a b c d e f g h i j k l m n"], {
                 start: {
                     line: 0,
                     column: 4,
@@ -39,7 +39,7 @@ describe(extractTextBetweenRanges.name, () => {
                     column: 7,
                 },
             }),
-            ' d',
+            " d"
         );
     });
 });

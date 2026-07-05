@@ -1,0 +1,53 @@
+---
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+# yamllint disable rule:truthy
+
+name: "npm Release"
+
+run-name: >-
+    ${{
+        github.event_name == 'workflow_dispatch' &&
+        format('Manual npm release by @{0}', github.actor) ||
+        format('Tagged npm release {0}', github.ref_name)
+    }}
+
+on:
+    push:
+        tags:
+            - "v*"
+    workflow_dispatch:
+        inputs:
+            release_type:
+                description: "Release bump type."
+                required: false
+                default: "patch"
+                type: "choice"
+                options:
+                    - "patch"
+                    - "minor"
+                    - "major"
+            version:
+                description: >-
+                    Explicit version in x.y.z format. Overrides release_type.
+                required: false
+                type: "string"
+
+concurrency:
+    group: "npm-release-${{ github.workflow }}-${{ github.ref }}"
+    cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+    npm-release:
+        name: "Publish package"
+        permissions:
+            contents: "write"
+            id-token: "write"
+        uses: >-
+            Nick2bad4u/workflow-templates/.github/workflows/reusable-npm-release.yml@58ce16bfdbbf38d6c61ad95625791a058e3b525c
+        with:
+            release_type: "${{ inputs.release_type || '' }}"
+            version: "${{ inputs.version || '' }}"
+        secrets:
+            NPM_TOKEN: "${{ secrets.NPM_TOKEN }}"

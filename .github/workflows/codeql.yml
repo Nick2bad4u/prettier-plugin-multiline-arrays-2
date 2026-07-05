@@ -1,0 +1,51 @@
+---
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+# yamllint disable rule:truthy
+
+name: "Codeql Analysis"
+
+run-name: >-
+    Codeql Analysis • ${{ github.event_name }} • ${{
+        github.event.pull_request.number || github.ref_name || github.sha
+    }}
+
+on:
+    push:
+        branches:
+            - "main"
+            - "dev"
+    pull_request:
+    merge_group:
+        types:
+            - "checks_requested"
+    schedule:
+        - cron: "27 4 * * 1"
+
+concurrency:
+    group: "codeql-${{ github.workflow }}-${{ github.ref }}"
+    cancel-in-progress: true
+
+permissions:
+    actions: "read"
+    contents: "read"
+    security-events: "write"
+
+jobs:
+    analyze:
+        name: "Analyze"
+        runs-on: "ubuntu-latest"
+        timeout-minutes: 30
+        steps:
+            - name: "Checkout"
+              uses: >-
+                  actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+            - name: "Initialize CodeQL"
+              uses: >-
+                  github/codeql-action/init@8e68100f5d9c3990e4fc0727a0d1e4ed6183c8d3
+              with:
+                  languages: "javascript-typescript"
+
+            - name: "Perform CodeQL analysis"
+              uses: >-
+                  github/codeql-action/analyze@8e68100f5d9c3990e4fc0727a0d1e4ed6183c8d3

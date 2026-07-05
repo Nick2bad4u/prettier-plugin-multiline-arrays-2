@@ -1,116 +1,137 @@
-import {stringify} from '@augment-vir/common';
-import {type Parser, type ParserOptions, type Plugin, type Printer} from 'prettier';
-import {createWrappedMultiTargetProxy} from 'proxy-vir';
-import {type SetOptional} from 'type-fest';
-import {pluginMarker} from './plugin-marker.js';
-import {createMultilineArrayPrinter} from './printer/multiline-array-printer.js';
-import {setOriginalPrinter} from './printer/original-printer.js';
+import { stringify } from "@augment-vir/common";
+import type { Parser, ParserOptions, Plugin, Printer } from "prettier";
+import { createWrappedMultiTargetProxy } from "proxy-vir";
+import { pluginMarker } from "./plugin-marker.js";
+import { createMultilineArrayPrinter } from "./printer/multiline-array-printer.js";
+import { setOriginalPrinter } from "./printer/original-printer.js";
+
+type SetOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 /** Prettier's type definitions are not true. */
-type ActualParserOptions = SetOptional<ParserOptions, 'plugins'> &
+type ActualParserOptions = SetOptional<ParserOptions, "plugins"> &
     Partial<{
         astFormat: string;
         printer: Printer;
     }>;
 
 function addMultilinePrinter(options: ActualParserOptions): void {
-    if ('printer' in options) {
+    if ("printer" in options) {
         setOriginalPrinter(options.printer);
         /** Overwrite the printer with ours. */
         options.printer = createMultilineArrayPrinter(options.printer);
     } else {
         const astFormat = options.astFormat;
         if (!astFormat) {
-            throw new Error('Could not find astFormat while adding printer.');
+            throw new Error("Could not find astFormat while adding printer.");
         }
         /**
-         * If the printer hasn't already been assigned in options, rearrange plugins so that ours
-         * gets chosen.
+         * If the printer hasn't already been assigned in options, rearrange
+         * plugins so that ours gets chosen.
          */
         const plugins = options.plugins ?? [];
         const firstMatchedPlugin = plugins.find(
             (plugin): plugin is Plugin =>
-                typeof plugin !== 'string' &&
+                typeof plugin !== "string" &&
                 !(plugin instanceof URL) &&
                 !!plugin.printers &&
-                !!plugin.printers[astFormat],
+                !!plugin.printers[astFormat]
         );
-        if (!firstMatchedPlugin || typeof firstMatchedPlugin === 'string') {
-            throw new Error(`Matched invalid first plugin: ${firstMatchedPlugin}`);
+        if (!firstMatchedPlugin || typeof firstMatchedPlugin === "string") {
+            throw new Error(
+                `Matched invalid first plugin: ${firstMatchedPlugin}`
+            );
         }
         const matchedPrinter = firstMatchedPlugin.printers?.[astFormat];
         if (!matchedPrinter) {
             throw new Error(
-                `Printer not found on matched plugin: ${stringify(firstMatchedPlugin)}`,
+                `Printer not found on matched plugin: ${stringify(firstMatchedPlugin)}`
             );
         }
         setOriginalPrinter(matchedPrinter);
         const thisPluginIndex = plugins.findIndex((plugin) => {
-            return (plugin as {pluginMarker: any}).pluginMarker === pluginMarker;
+            return (
+                (plugin as { pluginMarker: any }).pluginMarker === pluginMarker
+            );
         });
         const thisPlugin = plugins[thisPluginIndex];
         if (!thisPlugin) {
-            throw new Error('This plugin was not found.');
+            throw new Error("This plugin was not found.");
         }
 
-        /** Add this plugin to the beginning of the array so its printer is found first. */
+        /**
+         * Add this plugin to the beginning of the array so its printer is found
+         * first.
+         */
         plugins.splice(thisPluginIndex, 1);
         plugins.splice(0, 0, thisPlugin);
     }
 }
 
-function findPluginsByParserName(parserName: string, plugins: (Plugin | URL | string)[]): Plugin[] {
+function findPluginsByParserName(
+    parserName: string,
+    plugins: (Plugin | URL | string)[]
+): Plugin[] {
     return plugins.filter((plugin): plugin is Plugin => {
         return (
-            typeof plugin === 'object' &&
+            typeof plugin === "object" &&
             !(plugin instanceof URL) &&
-            (plugin as {pluginMarker: any}).pluginMarker !== pluginMarker &&
+            (plugin as { pluginMarker: any }).pluginMarker !== pluginMarker &&
             !!plugin.parsers?.[parserName]
         );
     });
 }
 
 export function wrapParser(originalParser: Parser, parserName: string) {
-    /** Create a multi-target proxy of parsers so that we don't block other plugins. */
+    /**
+     * Create a multi-target proxy of parsers so that we don't block other
+     * plugins.
+     */
     const parserProxy = createWrappedMultiTargetProxy<Parser>({
         initialTarget: originalParser,
     });
 
-    function multilineArraysPluginPreprocess(text: string, options: ActualParserOptions) {
+    async function multilineArraysPluginPreprocess(
+        text: string,
+        options: ActualParserOptions
+    ) {
         const pluginsFromOptions = options.plugins ?? [];
-        const pluginsWithRelevantParsers = findPluginsByParserName(parserName, pluginsFromOptions);
+        const pluginsWithRelevantParsers = findPluginsByParserName(
+            parserName,
+            pluginsFromOptions
+        );
         pluginsWithRelevantParsers.forEach((plugin) => {
             const currentParser = plugin.parsers?.[parserName];
             if (
                 currentParser &&
-                (plugin as {name?: string | undefined} | undefined)?.name?.includes(
-                    'prettier-plugin-sort-json',
-                )
+                (
+                    plugin as { name?: string | undefined } | undefined
+                )?.name?.includes("prettier-plugin-sort-json")
             ) {
                 parserProxy.proxyModifier.addOverrideTarget(currentParser);
             }
         });
 
         const pluginsWithPreprocessor = pluginsWithRelevantParsers.filter(
-            (plugin) => !!plugin.parsers?.[parserName]?.preprocess,
+            (plugin) => !!plugin.parsers?.[parserName]?.preprocess
         );
 
         let processedText = text;
 
-        pluginsWithPreprocessor.forEach((pluginWithPreprocessor) => {
-            const nextText = pluginWithPreprocessor.parsers?.[parserName]?.preprocess?.(
-                processedText,
-                {
-                    ...options,
-                    plugins: pluginsFromOptions.filter(
-                        (plugin) => (plugin as {pluginMarker: any}).pluginMarker !== pluginMarker,
-                    ),
-                },
-            );
+        for (const pluginWithPreprocessor of pluginsWithPreprocessor) {
+            const nextText = await pluginWithPreprocessor.parsers?.[
+                parserName
+            ]?.preprocess?.(processedText, {
+                ...options,
+                plugins: pluginsFromOptions.filter(
+                    (plugin) =>
+                        (plugin as { pluginMarker: any }).pluginMarker !==
+                        pluginMarker
+                ),
+            } as ParserOptions);
             if (nextText != undefined) {
                 processedText = nextText;
             }
-        });
+        }
 
         addMultilinePrinter(options);
 

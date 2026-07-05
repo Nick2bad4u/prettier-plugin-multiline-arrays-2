@@ -1,29 +1,43 @@
-import {getObjectTypedKeys, type Values} from '@augment-vir/common';
-import {type SupportOptionType as PrettierOptionType} from 'prettier';
+import { getObjectTypedKeys, type Values } from "@augment-vir/common";
+import type { SupportOptionType as PrettierOptionType } from "prettier";
 
-export const envDebugKey = 'MULTILINE_DEBUG';
+export const envDebugKey = "MULTILINE_DEBUG";
 
-export const nextLinePatternComment = 'prettier-multiline-arrays-next-line-pattern:';
+export const nextLinePatternComment =
+    "prettier-multiline-arrays-next-line-pattern:";
 // all the text up until the comment trigger
-export const untilNextLinePatternCommentRegExp = new RegExp(`.*${nextLinePatternComment}`);
-export const setLinePatternComment = 'prettier-multiline-arrays-set-line-pattern:';
+export const untilNextLinePatternCommentRegExp = new RegExp(
+    `.*${nextLinePatternComment}`
+);
+export const setLinePatternComment =
+    "prettier-multiline-arrays-set-line-pattern:";
 // all the text up until the comment trigger
-export const untilSetLinePatternCommentRegExp = new RegExp(`.*${setLinePatternComment}`);
+export const untilSetLinePatternCommentRegExp = new RegExp(
+    `.*${setLinePatternComment}`
+);
 
-export const nextWrapThresholdComment = 'prettier-multiline-arrays-next-threshold:';
+export const nextWrapThresholdComment =
+    "prettier-multiline-arrays-next-threshold:";
 // all the text up until the comment trigger
-export const untilNextWrapThresholdCommentRegExp = new RegExp(`.*${nextWrapThresholdComment}`);
-export const setWrapThresholdComment = 'prettier-multiline-arrays-set-threshold:';
+export const untilNextWrapThresholdCommentRegExp = new RegExp(
+    `.*${nextWrapThresholdComment}`
+);
+export const setWrapThresholdComment =
+    "prettier-multiline-arrays-set-threshold:";
 // all the text up until the comment trigger
-export const untilSetWrapThresholdCommentRegExp = new RegExp(`.*${setWrapThresholdComment}`);
+export const untilSetWrapThresholdCommentRegExp = new RegExp(
+    `.*${setWrapThresholdComment}`
+);
 
-export const resetComment = 'prettier-multiline-arrays-reset';
+export const resetComment = "prettier-multiline-arrays-reset";
 
 export type MultilineArrayOptions = {
     /**
-     * If there are MORE elements in the array than this, the array will be forced to wrap.
+     * If there are MORE elements in the array than this, the array will be
+     * forced to wrap.
      *
-     * This defaults to -1, indicating that no special wrapping enforcement will take place.
+     * This defaults to -1, indicating that no special wrapping enforcement will
+     * take place.
      *
      * Set to 2 to only wrap if there are more than 2 element. Etc.
      */
@@ -38,18 +52,18 @@ export const optionHelp: Record<keyof MultilineArrayOptions, string> = {
 
 export const optionPropertyValidators: {
     [Property in keyof MultilineArrayOptions]: (
-        input: unknown,
+        input: unknown
     ) => input is MultilineArrayOptions[Property];
 } = {
     multilineArraysWrapThreshold(input): input is number {
-        return typeof input === 'number' && !isNaN(input);
+        return typeof input === "number" && !isNaN(input);
     },
     multilineArraysLinePattern(input): input is string {
-        if (typeof input !== 'string') {
+        if (typeof input !== "string") {
             return false;
         }
 
-        const splitNumbers = input.split(' ');
+        const splitNumbers = input.split(" ");
 
         return splitNumbers.every((splitNumber) => {
             const numericSplit = Number(splitNumber);
@@ -60,16 +74,24 @@ export const optionPropertyValidators: {
 
 export const defaultMultilineArrayOptions: MultilineArrayOptions = {
     multilineArraysWrapThreshold: -1,
-    multilineArraysLinePattern: '',
+    multilineArraysLinePattern: "",
 };
 
-const optionTypeToPrettierOptionTypeMapping: Record<string, PrettierOptionType> = {
-    number: 'int',
-    boolean: 'boolean',
-    string: 'string',
-} as const satisfies Record<'boolean' | 'number' | 'string', PrettierOptionType>;
+const optionTypeToPrettierOptionTypeMapping: Record<
+    string,
+    PrettierOptionType
+> = {
+    number: "int",
+    boolean: "boolean",
+    string: "string",
+} as const satisfies Record<
+    "boolean" | "number" | "string",
+    PrettierOptionType
+>;
 
-export function getPrettierOptionType(input: Values<MultilineArrayOptions>): PrettierOptionType {
+export function getPrettierOptionType(
+    input: Values<MultilineArrayOptions>
+): PrettierOptionType {
     const mappedType = optionTypeToPrettierOptionTypeMapping[typeof input];
 
     if (mappedType) {
@@ -79,8 +101,10 @@ export function getPrettierOptionType(input: Values<MultilineArrayOptions>): Pre
     }
 }
 
-export function fillInOptions<T extends object>(input: T | undefined): MultilineArrayOptions & T {
-    if (!input || typeof input !== 'object') {
+export function fillInOptions<T extends object>(
+    input: T | undefined
+): MultilineArrayOptions & T {
+    if (!input || typeof input !== "object") {
         return defaultMultilineArrayOptions as MultilineArrayOptions & T;
     }
     const newOptions: MultilineArrayOptions & T = {
@@ -90,10 +114,13 @@ export function fillInOptions<T extends object>(input: T | undefined): Multiline
         const inputValue: unknown = (input as any)[optionsKey];
         const defaultValue = defaultMultilineArrayOptions[optionsKey];
         if (optionPropertyValidators[optionsKey](inputValue)) {
-            (newOptions as Record<typeof optionsKey, typeof inputValue>)[optionsKey] = inputValue;
+            (newOptions as Record<typeof optionsKey, typeof inputValue>)[
+                optionsKey
+            ] = inputValue;
         } else {
-            (newOptions as Record<typeof optionsKey, typeof defaultValue>)[optionsKey] =
-                defaultValue;
+            (newOptions as Record<typeof optionsKey, typeof defaultValue>)[
+                optionsKey
+            ] = defaultValue;
         }
     });
 

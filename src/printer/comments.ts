@@ -1,30 +1,27 @@
-import {type Comment} from 'estree';
+import type { Comment } from "estree";
 
-const ignoreTheseKeys = ['tokens'];
-const ignoreTheseChildTypes = [
-    'string',
-    'number',
-];
+const ignoreTheseKeys = ["tokens"];
+const ignoreTheseChildTypes = ["string", "number"];
 
 const commentTypes = [
-    'Line',
-    'Block',
-    'CommentBlock',
-    'CommentLine',
+    "Line",
+    "Block",
+    "CommentBlock",
+    "CommentLine",
 ] as const;
 
 function isMaybeComment(input: any): input is Comment {
     return !(
         !input ||
-        typeof input !== 'object' ||
-        !('type' in input) ||
+        typeof input !== "object" ||
+        !("type" in input) ||
         !commentTypes.includes(input.type) ||
-        !('value' in input)
+        !("value" in input)
     );
 }
 
 export function extractComments(node: any): Comment[] {
-    if (!node || typeof node !== 'object') {
+    if (!node || typeof node !== "object") {
         return [];
     }
     const comments: Comment[] = [];

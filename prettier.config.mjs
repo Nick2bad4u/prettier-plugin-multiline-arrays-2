@@ -1,23 +1,24 @@
-import {basePrettierConfig} from '@virmator/format/configs/prettier.config.base.mjs';
+import prettierConfig from "prettier-config-nick2bad4u";
+
+const localPluginUrl = new URL("dist/index.js", import.meta.url);
+const localPlugin = localPluginUrl.href;
 
 /**
- * @typedef {import('prettier-plugin-multiline-arrays').MultilineArrayOptions} MultilineOptions
+ * Prettier 3.9 selects the last plugin-provided parser for a parser name. Keep
+ * this plugin last so its parser can wrap the built-in parser and run companion
+ * plugin preprocessors.
  *
- * @typedef {import('prettier').Options} PrettierOptions
- * @type {PrettierOptions & MultilineOptions}
+ * @type {import("prettier").Config}
  */
-const prettierConfig = {
-    ...basePrettierConfig,
-    /**
-     * Ensure tests use the local plugin implementation from this repo rather than any
-     * globally-installed or parent-folder copies.
-     */
-    plugins: basePrettierConfig.plugins.map((plugin) =>
-        plugin === 'prettier-plugin-multiline-arrays'
-            ? new URL('./dist/index.js', import.meta.url).href
-            : plugin,
-    ),
-    multilineArraysWrapThreshold: -1,
+const localConfig = {
+    ...prettierConfig,
+    plugins: [
+        ...(prettierConfig.plugins ?? []).filter(
+            (plugin) => plugin !== "prettier-plugin-multiline-arrays"
+        ),
+        "prettier-plugin-organize-imports",
+        localPlugin,
+    ],
 };
 
-export default prettierConfig;
+export default localConfig;

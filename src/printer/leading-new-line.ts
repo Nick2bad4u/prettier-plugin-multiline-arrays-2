@@ -1,5 +1,5 @@
-import {type BaseNode} from 'estree';
-import {extractTextBetweenRanges} from '../augments/array.js';
+import type { BaseNode } from "estree";
+import { extractTextBetweenRanges } from "../augments/array.js";
 
 export function containsLeadingNewline({
     nodeLocation,
@@ -7,7 +7,7 @@ export function containsLeadingNewline({
     originalLines,
     debug,
 }: Readonly<{
-    nodeLocation: BaseNode['loc'];
+    nodeLocation: BaseNode["loc"];
     children: (BaseNode | null)[];
     originalLines: string[];
     debug: boolean;
@@ -34,10 +34,10 @@ export function containsLeadingNewline({
         });
         if (debug) {
             console.info(
-                `containsLeadingNewline textBeforeFirstElement: ${textBeforeFirstElement}`,
+                `containsLeadingNewline textBeforeFirstElement: ${textBeforeFirstElement}`
             );
         }
-        if (textBeforeFirstElement.includes('\n')) {
+        if (textBeforeFirstElement.includes("\n")) {
             return true;
         }
     }

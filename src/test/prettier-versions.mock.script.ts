@@ -1,26 +1,41 @@
-import {assert, assertWrap} from '@augment-vir/assert';
-import {awaitedBlockingMap, indent, log, logColors} from '@augment-vir/common';
-import {readPackageJson, runShellCommand} from '@augment-vir/node';
-import {calculateRelativeDate, createUtcFullDate, getNowInUtcTimezone, toTimestamp} from 'date-vir';
-import {resolve} from 'node:path';
-import {assertValidShape, defineShape, recordShape, unknownShape} from 'object-shape-tester';
-import semver from 'semver';
+import { assert, assertWrap } from "@augment-vir/assert";
+import {
+    awaitedBlockingMap,
+    indent,
+    log,
+    logColors,
+} from "@augment-vir/common";
+import { readPackageJson, runShellCommand } from "@augment-vir/node";
+import {
+    calculateRelativeDate,
+    createUtcFullDate,
+    getNowInUtcTimezone,
+    toTimestamp,
+} from "date-vir";
+import { resolve } from "node:path";
+import {
+    assertValidShape,
+    defineShape,
+    recordShape,
+    unknownShape,
+} from "object-shape-tester";
+import semver from "semver";
 
-const repoRootDirPath = resolve(import.meta.dirname, '..', '..');
+const repoRootDirPath = resolve(import.meta.dirname, "..", "..");
 const repoPackageJson = await readPackageJson(repoRootDirPath);
 
 const supportedPrettierRange = assertWrap.isTruthy(
     repoPackageJson.peerDependencies?.prettier,
-    'Failed to find supported Prettier version range from peer dependencies.',
+    "Failed to find supported Prettier version range from peer dependencies."
 );
 
 const currentPrettierVersion = assertWrap.isTruthy(
     repoPackageJson.devDependencies?.prettier,
-    'Failed to find current Prettier version from dev dependencies.',
+    "Failed to find current Prettier version from dev dependencies."
 );
 
 async function fetchPrettierV3MinorVersions(): Promise<string[]> {
-    const response = await fetch('https://registry.npmjs.org/prettier');
+    const response = await fetch("https://registry.npmjs.org/prettier");
     if (!response.ok) {
         throw new Error(`Failed to fetch npm metadata: ${response.status}`);
     }
@@ -31,31 +46,36 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
         responseJson,
         defineShape({
             versions: recordShape({
-                keys: '',
+                keys: "",
                 values: unknownShape(),
             }),
             time: recordShape({
-                keys: '',
-                values: '',
+                keys: "",
+                values: "",
             }),
         }),
         {
             allowExtraKeys: true,
-        },
+        }
     );
     const oldestAllowedPublishTime = toTimestamp(
         calculateRelativeDate(getNowInUtcTimezone(), {
             days: -5,
-        }),
+        })
     );
     const rawVersions = Object.keys(responseJson.versions).filter((version) => {
         const publishTime = responseJson.time[version];
         if (!publishTime) {
-            log.warning(`Failed to find publish time for Prettier version: ${version}`);
+            log.warning(
+                `Failed to find publish time for Prettier version: ${version}`
+            );
             return false;
         }
 
-        return toTimestamp(createUtcFullDate(publishTime)) <= oldestAllowedPublishTime;
+        return (
+            toTimestamp(createUtcFullDate(publishTime)) <=
+            oldestAllowedPublishTime
+        );
     });
 
     const mappedLatestMinorVersions = rawVersions.reduce(
@@ -67,7 +87,9 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
             const parsedVersion = semver.parse(version);
 
             if (!parsedVersion) {
-                log.warning(`Failed to parse Prettier version with semver: ${version}`);
+                log.warning(
+                    `Failed to parse Prettier version with semver: ${version}`
+                );
                 return latestMinorVersions;
             }
 
@@ -79,7 +101,7 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
 
             return latestMinorVersions;
         },
-        {} as Record<string, string>,
+        {} as Record<string, string>
     );
 
     return Object.values(mappedLatestMinorVersions).sort(semver.compare);
@@ -88,26 +110,31 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
 async function runPrettierTests() {
     const prettierVersions = await fetchPrettierV3MinorVersions();
 
-    log.info(`Testing with prettier versions:\n${indent(prettierVersions.join('\n'))}`);
+    log.info(
+        `Testing with prettier versions:\n${indent(prettierVersions.join("\n"))}`
+    );
 
     const versionPasses = await awaitedBlockingMap(
         prettierVersions,
-        async (version): Promise<{version: string; success: boolean}> => {
+        async (version): Promise<{ version: string; success: boolean }> => {
             log.info(`\n\n>>>>>>>>>> Prettier v${version}\n`);
 
             try {
                 log.faint(`Installing Prettier v${version}...`);
-                await runShellCommand(`npm i -D --no-save prettier@${version}`, {
-                    cwd: repoRootDirPath,
-                    rejectOnError: true,
-                });
-                const {stdout} = await runShellCommand('npm ls prettier', {
+                await runShellCommand(
+                    `npm i -D --no-save prettier@${version}`,
+                    {
+                        cwd: repoRootDirPath,
+                        rejectOnError: true,
+                    }
+                );
+                const { stdout } = await runShellCommand("npm ls prettier", {
                     cwd: repoRootDirPath,
                 });
                 assert.hasValue(
                     stdout,
                     `└── prettier@${version}`,
-                    `Prettier v${version} was not installed.`,
+                    `Prettier v${version} was not installed.`
                 );
             } catch (error) {
                 log.faint(error);
@@ -119,7 +146,7 @@ async function runPrettierTests() {
             }
             log.faint(`Running tests for Prettier v${version}...`);
             try {
-                await runShellCommand('npm test', {
+                await runShellCommand("npm test", {
                     cwd: repoRootDirPath,
                     rejectOnError: true,
                     hookUpToConsole: true,
@@ -135,31 +162,34 @@ async function runPrettierTests() {
                     success: false,
                 };
             }
-        },
+        }
     );
 
     log.faint(`Restoring Prettier v${currentPrettierVersion}...\n\n`);
-    await runShellCommand(`npm i -D --no-save prettier@${currentPrettierVersion}`, {
-        cwd: repoRootDirPath,
-        rejectOnError: true,
-    });
+    await runShellCommand(
+        `npm i -D --no-save prettier@${currentPrettierVersion}`,
+        {
+            cwd: repoRootDirPath,
+            rejectOnError: true,
+        }
+    );
 
-    versionPasses.forEach(({success, version}) => {
+    versionPasses.forEach(({ success, version }) => {
         log.info(
             `Prettier v${version}: ${success ? logColors.success : logColors.error}${
-                success ? 'pass' : 'fail'
-            }${logColors.reset}`,
+                success ? "pass" : "fail"
+            }${logColors.reset}`
         );
     });
-    const success = versionPasses.every(({success}) => {
+    const success = versionPasses.every(({ success }) => {
         return success;
     });
 
     if (success) {
-        log.success('Versioned tests passed.');
+        log.success("Versioned tests passed.");
         process.exit(0);
     } else {
-        log.error('Versioned tests failed.');
+        log.error("Versioned tests failed.");
         process.exit(1);
     }
 }
