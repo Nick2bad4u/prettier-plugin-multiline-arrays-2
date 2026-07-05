@@ -67,22 +67,22 @@
         "update-deps": "npx ncu -i --install never && npm update --force && npm install --force"
     },
     "dependencies": {
-        "@augment-vir/assert": "^31.73.2",
-        "@augment-vir/common": "^31.73.2",
+        "@augment-vir/assert": "^31.73.5",
+        "@augment-vir/common": "^31.73.5",
         "proxy-vir": "^2.0.3"
     },
     "devDependencies": {
-        "@augment-vir/test": "^31.73.2",
+        "@augment-vir/test": "^31.73.5",
         "@eslint/js": "^10.0.1",
         "@types/esprima": "^4.0.6",
         "@types/estree": "^1.0.9",
-        "@types/node": "^26.0.0",
+        "@types/node": "^26.0.1",
         "@types/semver": "^7.7.1",
         "cspell": "^10.0.1",
         "eslint": "^10.5.0",
         "eslint-config-nick2bad4u": "^3.0.3",
         "git-cliff": "^2.13.1",
-        "npm-check-updates": "^22.2.7",
+        "npm-check-updates": "^22.2.9",
         "object-shape-tester": "^6.14.0",
         "prettier": "^3.9.4",
         "prettier-config-nick2bad4u": "^1.0.19",
