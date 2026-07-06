@@ -1,13 +1,13 @@
 import type { MultilineArrayTest } from "./run-tests.mock.js";
 
-import { capitalizeFirst } from "../augments/string.js";
+import { capitalizeFirst } from "../src/augments/string.js";
 import {
     nextLinePatternComment,
     nextWrapThresholdComment,
     resetComment,
     setLinePatternComment,
     setWrapThresholdComment,
-} from "../options.js";
+} from "../src/options.js";
 
 export const typescriptTests: MultilineArrayTest[] = [
     {

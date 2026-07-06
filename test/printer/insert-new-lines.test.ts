@@ -1,12 +1,14 @@
 import * as prettier from "prettier";
 import { describe, expect, it } from "vitest";
 
-import { insertLinesIntoArray } from "./insert-new-lines.js";
+import { insertLinesIntoArray } from "../../src/printer/insert-new-lines.js";
 
 type Doc = prettier.Doc;
 
-describe(insertLinesIntoArray.name, () => {
+describe(insertLinesIntoArray, () => {
     it("handles comment-only array doc emitted by Prettier GitHub Issue #75", () => {
+        expect.assertions(1);
+
         const commentOnlyArrayDoc: Doc = [
             "[",
             [

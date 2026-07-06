@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
     type MultilineArrayOptions,
     optionPropertyValidators,
-} from "./options.js";
+} from "../src/options.js";
 
 describe("optionPropertyValidators", () => {
     const cases: readonly {
@@ -44,11 +44,11 @@ describe("optionPropertyValidators", () => {
         },
     ];
 
-    for (const testCase of cases) {
-        it(testCase.title, () => {
-            expect(
-                optionPropertyValidators[testCase.optionType](testCase.input)
-            ).toBe(testCase.expect);
-        });
-    }
+    it.each(cases)("$title", (testCase) => {
+        expect.assertions(1);
+
+        expect(
+            optionPropertyValidators[testCase.optionType](testCase.input)
+        ).toBe(testCase.expect);
+    });
 });

@@ -1,15 +1,15 @@
 {
     "$schema": "https://json.schemastore.org/tsconfig",
     "compilerOptions": {
-        "noEmit": false
+        "noEmit": false,
+        "rootDir": "./src"
     },
     "exclude": [
         "coverage",
+        "docs",
         "dist",
         "node_modules",
-        "src/**/*.mock.ts",
-        "src/**/*.test.ts",
-        "src/readme-examples/**/*.ts"
+        "test"
     ],
     "extends": "./tsconfig.json"
 }

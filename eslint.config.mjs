@@ -19,16 +19,12 @@ const prettierAstBoundaryFiles = [
     "src/options.ts",
     "src/preprocessing.ts",
     "src/printer/**/*.ts",
-    "src/test/prettier-config.ts",
-    "src/test/prettier-versions.mock.script.ts",
-    "src/test/run-tests.mock.ts",
+    "test/prettier-config.ts",
+    "test/prettier-versions.mock.script.ts",
+    "test/run-tests.mock.ts",
 ];
 
-const fixtureTestFiles = [
-    "src/test/**/*.ts",
-    "src/**/*.test.ts",
-    "src/readme-examples/**/*.ts",
-];
+const fixtureTestFiles = ["docs/readme-examples/**/*.ts", "test/**/*.ts"];
 
 /** @type {import("eslint").Linter.Config[]} */
 const config = [
@@ -70,7 +66,7 @@ const config = [
         ]),
     },
     {
-        files: ["src/test/prettier-config.ts"],
+        files: ["test/prettier-config.ts"],
         name: "Local Prettier config import",
         rules: turnOffRules(["import-x/extensions"]),
     },
@@ -80,7 +76,7 @@ const config = [
         rules: turnOffRules(["n/no-process-env"]),
     },
     {
-        files: ["src/printer/**/*.ts", "src/test/run-tests.mock.ts"],
+        files: ["src/printer/**/*.ts", "test/run-tests.mock.ts"],
         name: "Debug logging paths",
         rules: turnOffRules(["no-console"]),
     },
@@ -93,7 +89,7 @@ const config = [
         files: [
             "src/options.ts",
             "src/printer/comment-triggers.ts",
-            "src/test/typescript-tests.mock.ts",
+            "test/typescript-tests.mock.ts",
         ],
         name: "Public option and comment trigger naming",
         rules: turnOffRules(["unicorn/no-non-function-verb-prefix"]),
@@ -102,7 +98,7 @@ const config = [
         files: [
             "src/augments/doc.ts",
             "src/printer/**/*.ts",
-            "src/test/prettier-versions.mock.script.ts",
+            "test/prettier-versions.mock.script.ts",
         ],
         name: "Existing boolean terminology",
         rules: turnOffRules(["unicorn/consistent-boolean-name"]),
@@ -113,7 +109,7 @@ const config = [
         rules: turnOffRules(["unicorn/no-useless-recursion"]),
     },
     {
-        files: ["src/test/run-tests.mock.ts"],
+        files: ["test/run-tests.mock.ts"],
         name: "Fixture runner test definitions",
         rules: turnOffRules([
             "unicorn/prefer-error-is-error",

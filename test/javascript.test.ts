@@ -1,10 +1,10 @@
 import { describe } from "vitest";
 
-import { capitalizeFirst } from "../augments/string.js";
+import { capitalizeFirst } from "../src/augments/string.js";
 import {
     nextLinePatternComment,
     nextWrapThresholdComment,
-} from "../options.js";
+} from "../src/options.js";
 import { type MultilineArrayTest, runTests } from "./run-tests.mock.js";
 
 const javascriptTests: MultilineArrayTest[] = [

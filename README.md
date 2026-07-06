@@ -4,7 +4,8 @@
 
 Prettier plugin to force array elements to wrap onto new lines, even when there is only one element. It supports TypeScript, JavaScript, JSON, and JSON5, with options for wrap thresholds and per-line element patterns.
 
-This is a maintained fork of [electrovir/prettier-plugin-multiline-arrays](https://github.com/electrovir/prettier-plugin-multiline-arrays). Credit to the original plugin for the core idea and implementation.
+> [!NOTE]
+> This is a maintained fork of [electrovir/prettier-plugin-multiline-arrays](https://github.com/electrovir/prettier-plugin-multiline-arrays). Credit to the original plugin for the core idea and implementation.
 
 ## Install
 
@@ -73,17 +74,4 @@ npm test
 npm run release:check
 ```
 
-The test suite runs against Node's built-in test runner through `tsx` and includes a `test:prettier-latest` check to verify compatibility with the current npm `latest` Prettier release.
-
-## Publishing
-
-This package is prepared for npm trusted publishing from GitHub Actions. Before the first release, create the package on npm and add a trusted publisher with these values:
-
-- Package: `prettier-plugin-multiline-arrays-2`
-- Provider: GitHub Actions
-- Repository owner: `Nick2bad4u`
-- Repository name: `prettier-plugin-multiline-arrays-2`
-- Workflow filename: `npm-release.yml`
-- Environment: leave unset unless you add a matching GitHub environment to the workflow
-
-The release workflow uses GitHub OIDC through `id-token: write` and publishes with provenance. It intentionally does not require an npm automation token.
+The test suite runs with Vitest coverage and includes a `test:prettier-latest` check to verify compatibility with the current npm `latest` Prettier release.

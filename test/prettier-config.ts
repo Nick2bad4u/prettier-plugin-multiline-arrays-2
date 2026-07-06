@@ -3,7 +3,7 @@ import type { Options } from "prettier";
 import prettierConfig from "prettier-config-nick2bad4u";
 import { safeCastTo } from "ts-extras";
 
-import * as localPlugin from "../index.js";
+import * as localPlugin from "../src/index.js";
 
 const typedRepoConfig = safeCastTo<Options>(prettierConfig);
 

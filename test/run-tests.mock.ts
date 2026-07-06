@@ -9,7 +9,7 @@ import * as prettier from "prettier";
 import { objectHasIn } from "ts-extras";
 import { expect, it } from "vitest";
 
-import type { MultilineArrayOptions } from "../options.js";
+import type { MultilineArrayOptions } from "../src/options.js";
 
 import { repoConfig } from "./prettier-config.js";
 

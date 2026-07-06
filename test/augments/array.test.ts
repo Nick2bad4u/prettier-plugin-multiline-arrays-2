@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { extractTextBetweenRanges } from "./array.js";
+import { extractTextBetweenRanges } from "../../src/augments/array.js";
 
-describe(extractTextBetweenRanges.name, () => {
+describe(extractTextBetweenRanges, () => {
     it("extracts text from multiple lines", () => {
+        expect.assertions(1);
+
         expect(
             extractTextBetweenRanges(
                 [
@@ -27,6 +29,8 @@ describe(extractTextBetweenRanges.name, () => {
     });
 
     it("extracts text from the same line", () => {
+        expect.assertions(1);
+
         expect(
             extractTextBetweenRanges(["a b c d e f g h i j k l m n"], {
                 start: {

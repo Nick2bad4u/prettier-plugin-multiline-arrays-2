@@ -1,6 +1,6 @@
 import { describe } from "vitest";
 
-import { nextWrapThresholdComment } from "../options.js";
+import { nextWrapThresholdComment } from "../src/options.js";
 import { type MultilineArrayTest, runTests } from "./run-tests.mock.js";
 
 const jsonTests: MultilineArrayTest[] = [

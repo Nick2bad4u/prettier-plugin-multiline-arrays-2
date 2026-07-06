@@ -21,7 +21,7 @@
         "noUncheckedIndexedAccess": true,
         "outDir": "./dist",
         "resolveJsonModule": true,
-        "rootDir": "./src",
+        "rootDir": ".",
         "skipLibCheck": true,
         "strict": true,
         "target": "ES2023",
@@ -36,6 +36,8 @@
         "node_modules"
     ],
     "include": [
-        "src/**/*.ts"
+        "docs/readme-examples/**/*.ts",
+        "src/**/*.ts",
+        "test/**/*.ts"
     ]
 }
