@@ -94,11 +94,16 @@ const optionTypeToPrettierOptionTypeMapping: Record<
     boolean: "boolean",
     string: "string",
 } as const satisfies Record<
-    "boolean" | "number" | "string",
+    | "boolean"
+    | "number"
+    | "string",
     MultilinePrettierOptionType
 >;
 
-export type MultilinePrettierOptionType = "boolean" | "int" | "string";
+export type MultilinePrettierOptionType =
+    | "boolean"
+    | "int"
+    | "string";
 
 export function getPrettierOptionType(
     input: Values<MultilineArrayOptions>

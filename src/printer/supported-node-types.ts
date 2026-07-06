@@ -7,7 +7,10 @@ type TSTupleType = BaseNode & {
     type: "TSTupleType";
 };
 
-export type ArrayLikeNode = ArrayExpression | ArrayPattern | TSTupleType;
+export type ArrayLikeNode =
+    | ArrayExpression
+    | ArrayPattern
+    | TSTupleType;
 
 const arrayLikeNodeTypes = new Set<string>([
     "ArrayExpression",

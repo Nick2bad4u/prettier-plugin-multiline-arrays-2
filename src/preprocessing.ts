@@ -117,7 +117,11 @@ function addMultilinePrinter(options: ActualParserOptions): void {
 
 function findPluginsByParserName(
     parserName: string,
-    plugins: (Plugin | string | URL)[]
+    plugins: (
+        | Plugin
+        | string
+        | URL
+    )[]
 ): Plugin[] {
     return plugins.filter((plugin): plugin is Plugin => {
         if (
