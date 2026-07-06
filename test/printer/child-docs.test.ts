@@ -1,9 +1,45 @@
 import { doc, type Doc } from "prettier";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { walkDoc } from "../../src/printer/child-docs.js";
 
 describe(walkDoc, () => {
+    it("logs parent metadata while debug walking", () => {
+        expect.assertions(2);
+
+        const visited: string[] = [];
+        const infoSpy = vi.spyOn(console, "info").mockReturnValue(undefined);
+
+        try {
+            walkDoc({
+                startDoc: ["debug-child"],
+                debug: true,
+                callback: (currentDoc) => {
+                    visited.push(
+                        Array.isArray(currentDoc)
+                            ? "array"
+                            : typeof currentDoc === "string"
+                              ? currentDoc
+                              : currentDoc.type
+                    );
+                    return true;
+                },
+            });
+
+            expect(visited).toStrictEqual(["array", "debug-child"]);
+            expect(infoSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    parent: expect.objectContaining({
+                        isArray: true,
+                        type: "object",
+                    }),
+                })
+            );
+        } finally {
+            infoSpy.mockRestore();
+        }
+    });
+
     it("walks array, contents, and parts children with parent metadata", () => {
         expect.assertions(1);
 
