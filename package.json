@@ -1,7 +1,7 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
     "name": "prettier-plugin-multiline-arrays-2",
-    "version": "1.0.0",
+    "version": "5.0.0",
     "description": "Prettier plugin to force array elements to wrap onto new lines.",
     "keywords": [
         "array",
