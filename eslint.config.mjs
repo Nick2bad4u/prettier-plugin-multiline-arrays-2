@@ -92,7 +92,10 @@ const config = [
             "test/typescript-tests.mock.ts",
         ],
         name: "Public option and comment trigger naming",
-        rules: turnOffRules(["unicorn/no-non-function-verb-prefix"]),
+        rules: turnOffRules([
+            "unicorn/no-non-function-verb-prefix",
+            "unicorn/prefer-global-number-constants",
+        ]),
     },
     {
         files: [

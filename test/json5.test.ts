@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { nextWrapThresholdComment } from "../src/options.js";
 import { type MultilineArrayTest, runTests } from "./run-tests.mock.js";
@@ -206,6 +206,12 @@ const json5Tests: MultilineArrayTest[] = [
 ];
 
 describe("json5 multiline array formatting", () => {
+    it("defines JSON5 fixture cases", () => {
+        expect.assertions(1);
+
+        expect(json5Tests.length).toBeGreaterThan(0);
+    });
+
     runTests({
         extension: ".json",
         tests: json5Tests,

@@ -1569,6 +1569,109 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
+        it: "formats a real-world route table with comments, callbacks, tuples, and nested metadata",
+        code: `
+            import {unused} from 'unused';
+            import {createRoute, requireRole} from './routing';
+
+            export const routes = [{path: '/projects/:projectId', guards: [requireRole('owner'), requireRole('maintainer')], loaders: [async (context) => fetchProject(context.params.projectId), async (context) => fetchMembers(context.params.projectId)], meta: {breadcrumbs: ['Home', 'Projects', 'Project detail'], auditEvents: [{event: 'project:view', fields: ['projectId', 'userId']}, {event: 'member:list', fields: ['projectId', 'role']}]}}, {path: '/settings/billing', guards: [requireRole('billing')], loaders: [loadInvoices, loadPaymentMethods], meta: {breadcrumbs: ['Home', 'Settings', 'Billing'], auditEvents: [{event: 'billing:view', fields: ['accountId', 'invoiceId']}]}}] satisfies Array<ReturnType<typeof createRoute>>;
+
+            export const orderedPairs: [string, readonly string[]][] = [
+                ['critical', ['pager-duty', 'email']],
+                ['normal', ['email']],
+                ['silent', []],
+            ];
+        `,
+        expect: `
+            import {createRoute, requireRole} from './routing';
+
+            export const routes = [
+                {
+                    path: '/projects/:projectId',
+                    guards: [
+                        requireRole('owner'),
+                        requireRole('maintainer'),
+                    ],
+                    loaders: [
+                        async (context) => fetchProject(context.params.projectId),
+                        async (context) => fetchMembers(context.params.projectId),
+                    ],
+                    meta: {
+                        breadcrumbs: [
+                            'Home',
+                            'Projects',
+                            'Project detail',
+                        ],
+                        auditEvents: [
+                            {
+                                event: 'project:view',
+                                fields: [
+                                    'projectId',
+                                    'userId',
+                                ],
+                            },
+                            {
+                                event: 'member:list',
+                                fields: [
+                                    'projectId',
+                                    'role',
+                                ],
+                            },
+                        ],
+                    },
+                },
+                {
+                    path: '/settings/billing',
+                    guards: [requireRole('billing')],
+                    loaders: [
+                        loadInvoices,
+                        loadPaymentMethods,
+                    ],
+                    meta: {
+                        breadcrumbs: [
+                            'Home',
+                            'Settings',
+                            'Billing',
+                        ],
+                        auditEvents: [
+                            {
+                                event: 'billing:view',
+                                fields: [
+                                    'accountId',
+                                    'invoiceId',
+                                ],
+                            },
+                        ],
+                    },
+                },
+            ] satisfies Array<ReturnType<typeof createRoute>>;
+
+            export const orderedPairs: [
+                string,
+                readonly string[],
+            ][] = [
+                [
+                    'critical',
+                    [
+                        'pager-duty',
+                        'email',
+                    ],
+                ],
+                [
+                    'normal',
+                    ['email'],
+                ],
+                [
+                    'silent',
+                    [],
+                ],
+            ];
+        `,
+        options: {
+            multilineArraysWrapThreshold: 1,
+        },
+    },
+    {
         it: "original parser with single line object assignment",
         code: `
             const myVar: object = {a: 'where', b: 'everywhere'};

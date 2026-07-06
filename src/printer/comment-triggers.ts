@@ -426,7 +426,7 @@ export function parseNextLineCounts({
     }
 
     const numbers = split.map((entry) =>
-        isIntegerString(entry.trim()) ? Number(entry.trim()) : NaN
+        isIntegerString(entry.trim()) ? Number(entry.trim()) : Number.NaN
     );
 
     const invalidNumbers = numbers

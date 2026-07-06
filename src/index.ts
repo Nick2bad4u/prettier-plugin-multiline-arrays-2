@@ -46,30 +46,34 @@ function createOptions(): Record<keyof MultilineArrayOptions, SupportOption> {
 
     for (const key of getObjectTypedKeys(defaultMultilineArrayOptions)) {
         const defaultValue = defaultMultilineArrayOptions[key];
-        const supportOption: SupportOption =
-            typeof defaultValue === "number"
-                ? ({
-                      name: key,
-                      type: "int",
-                      category: "multilineArray",
-                      default: defaultValue,
-                      description: optionHelp[key],
-                  } satisfies IntSupportOption)
-                : typeof defaultValue === "boolean"
-                  ? ({
-                        name: key,
-                        type: "boolean",
-                        category: "multilineArray",
-                        default: defaultValue,
-                        description: optionHelp[key],
-                    } satisfies BooleanSupportOption)
-                  : ({
-                        name: key,
-                        type: "string",
-                        category: "multilineArray",
-                        default: defaultValue,
-                        description: optionHelp[key],
-                    } satisfies StringSupportOption);
+        let supportOption: SupportOption;
+
+        if (typeof defaultValue === "number") {
+            supportOption = {
+                name: key,
+                type: "int",
+                category: "multilineArray",
+                default: defaultValue,
+                description: optionHelp[key],
+            } satisfies IntSupportOption;
+        } else if (typeof defaultValue === "boolean") {
+            supportOption = {
+                name: key,
+                type: "boolean",
+                category: "multilineArray",
+                default: defaultValue,
+                description: optionHelp[key],
+            } satisfies BooleanSupportOption;
+        } else {
+            supportOption = {
+                name: key,
+                type: "string",
+                category: "multilineArray",
+                default: defaultValue,
+                description: optionHelp[key],
+            } satisfies StringSupportOption;
+        }
+
         output[key] = supportOption;
     }
 

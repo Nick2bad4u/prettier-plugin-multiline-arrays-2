@@ -61,18 +61,11 @@ export interface MultilineArrayTest {
     expect?: string | undefined;
     failureMessage?: string;
     it: string;
-    only?: true;
     options?:
         | (Partial<MultilineArrayOptions> &
               PartialWithNullable<PrettierOptions>)
         | undefined;
-    skip?: true;
 }
-
-const testRunState = {
-    allPassed: true,
-    forced: false,
-};
 
 function removeLeadingBlankLine(input: string): string {
     const firstNewLineIndex = input.indexOf("\n");
@@ -139,11 +132,7 @@ export function runTests({
                     parser,
                 });
                 expect(formatted).toBe(expected);
-                if (formatted !== expected) {
-                    testRunState.allPassed = false;
-                }
             } catch (error) {
-                testRunState.allPassed = false;
                 if (test.failureMessage && error instanceof Error) {
                     const strippedMessage = removeColor(error.message);
                     if (test.failureMessage !== strippedMessage) {
@@ -163,23 +152,6 @@ export function runTests({
 
     for (const test of tests) {
         const testCallback = createTestCallback(test);
-        if (test.only) {
-            testRunState.forced = true;
-            it.only(test.it, testCallback);
-        } else if (test.skip) {
-            it.skip(test.it, testCallback);
-        } else {
-            it(test.it, testCallback);
-        }
-    }
-
-    if (testRunState.forced) {
-        it.only("forced tests should not remain in the code", () => {
-            if (testRunState.allPassed) {
-                expect(testRunState.forced, "Only tests are not allowed.").toBe(
-                    false
-                );
-            }
-        });
+        it(test.it, testCallback);
     }
 }

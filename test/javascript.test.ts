@@ -1,4 +1,4 @@
-import { describe } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { capitalizeFirst } from "../src/augments/string.js";
 import {
@@ -701,6 +701,12 @@ const javascriptTests: MultilineArrayTest[] = [
 ];
 
 describe("javascript multiline array formatting", () => {
+    it("defines JavaScript fixture cases", () => {
+        expect.assertions(1);
+
+        expect(javascriptTests.length).toBeGreaterThan(0);
+    });
+
     runTests({
         extension: ".js",
         tests: javascriptTests,
