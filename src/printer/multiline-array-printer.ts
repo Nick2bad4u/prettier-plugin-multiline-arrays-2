@@ -1,7 +1,10 @@
-import { assertWrap } from "@augment-vir/assert";
 import type { Node } from "estree";
-import type { AstPath, Doc, ParserOptions, Printer } from "prettier";
+import type { AstPath, ParserOptions, Printer } from "prettier";
+
+import { assertWrap } from "@augment-vir/assert";
 import estreePluginModule from "prettier/plugins/estree";
+import { safeCastTo } from "ts-extras";
+
 import {
     envDebugKey,
     fillInOptions,
@@ -18,7 +21,11 @@ const estreePlugin = estreePluginModule as unknown as {
     printers: Record<string, Printer<Node>>;
 };
 
-const debug = !!process.env[envDebugKey];
+type PrinterPrint = Printer<Node>["print"];
+type PrinterPrintCallback = Parameters<PrinterPrint>[2];
+
+const debugEnvValue = process.env[envDebugKey];
+const debug = Boolean(debugEnvValue);
 
 export function createMultilineArrayPrinter(
     basePrinter: Printer<Node>
@@ -35,7 +42,7 @@ export function createMultilineArrayPrinter(
         print(
             path: AstPath<Node>,
             options: ParserOptions,
-            print: (path: AstPath<Node>) => Doc,
+            print: PrinterPrintCallback,
             args?: unknown
         ) {
             if (debug) {
@@ -44,17 +51,15 @@ export function createMultilineArrayPrinter(
                     path.getNode()?.type
                 );
             }
-            const originalOutput = (
-                basePrinter.print as (
-                    path: AstPath<Node>,
-                    options: ParserOptions,
-                    print: (path: AstPath<Node>) => Doc,
-                    args?: unknown
-                ) => Doc
-            )(path, options, print, args);
+            const originalOutput = basePrinter.print(
+                path,
+                options,
+                print,
+                args
+            );
 
             if (
-                (options.filepath as string | undefined)?.endsWith(
+                safeCastTo<string | undefined>(options.filepath)?.endsWith(
                     "package.json"
                 ) &&
                 options.plugins.some(

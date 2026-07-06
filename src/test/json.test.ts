@@ -1,4 +1,5 @@
-import { describe } from "@augment-vir/test";
+import { describe } from "vitest";
+
 import { nextWrapThresholdComment } from "../options.js";
 import { type MultilineArrayTest, runTests } from "./run-tests.mock.js";
 
@@ -87,7 +88,7 @@ const jsonTests: MultilineArrayTest[] = [
             ["hello"]
         `,
         options: {
-            multilineArraysWrapThreshold: "fifty two" as any,
+            multilineArraysWrapThreshold: "fifty two" as unknown as number,
         },
         failureMessage:
             'Invalid multilineArraysWrapThreshold value. Expected an integer, but received "fifty two".',

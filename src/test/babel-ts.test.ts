@@ -1,4 +1,5 @@
-import { describe } from "@augment-vir/test";
+import { describe } from "vitest";
+
 import { runTests } from "./run-tests.mock.js";
 import { typescriptTests } from "./typescript-tests.mock.js";
 

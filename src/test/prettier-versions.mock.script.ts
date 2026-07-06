@@ -12,7 +12,7 @@ import {
     getNowInUtcTimezone,
     toTimestamp,
 } from "date-vir";
-import { resolve } from "node:path";
+import * as path from "node:path";
 import {
     assertValidShape,
     defineShape,
@@ -20,8 +20,9 @@ import {
     unknownShape,
 } from "object-shape-tester";
 import semver from "semver";
+import { arrayJoin, objectKeys, objectValues } from "ts-extras";
 
-const repoRootDirPath = resolve(import.meta.dirname, "..", "..");
+const repoRootDirPath = path.resolve();
 const repoPackageJson = await readPackageJson(repoRootDirPath);
 
 const supportedPrettierRange = assertWrap.isTruthy(
@@ -34,6 +35,16 @@ const currentPrettierVersion = assertWrap.isTruthy(
     "Failed to find current Prettier version from dev dependencies."
 );
 
+const unknownVersionShape = unknownShape();
+const versionMetadataShape = recordShape({
+    keys: "",
+    values: unknownVersionShape,
+});
+const publishTimeMetadataShape = recordShape({
+    keys: "",
+    values: "",
+});
+
 async function fetchPrettierV3MinorVersions(): Promise<string[]> {
     const response = await fetch("https://registry.npmjs.org/prettier");
     if (!response.ok) {
@@ -45,14 +56,8 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
     assertValidShape(
         responseJson,
         defineShape({
-            versions: recordShape({
-                keys: "",
-                values: unknownShape(),
-            }),
-            time: recordShape({
-                keys: "",
-                values: "",
-            }),
+            versions: versionMetadataShape,
+            time: publishTimeMetadataShape,
         }),
         {
             allowExtraKeys: true,
@@ -63,7 +68,7 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
             days: -5,
         })
     );
-    const rawVersions = Object.keys(responseJson.versions).filter((version) => {
+    const rawVersions = objectKeys(responseJson.versions).filter((version) => {
         const publishTime = responseJson.time[version];
         if (!publishTime) {
             log.warning(
@@ -78,51 +83,48 @@ async function fetchPrettierV3MinorVersions(): Promise<string[]> {
         );
     });
 
-    const mappedLatestMinorVersions = rawVersions.reduce(
-        (latestMinorVersions, version) => {
-            if (!semver.satisfies(version, supportedPrettierRange)) {
-                return latestMinorVersions;
-            }
+    const mappedLatestMinorVersions: Record<string, string> = {};
 
-            const parsedVersion = semver.parse(version);
+    for (const version of rawVersions) {
+        if (!semver.satisfies(version, supportedPrettierRange)) {
+            continue;
+        }
 
-            if (!parsedVersion) {
-                log.warning(
-                    `Failed to parse Prettier version with semver: ${version}`
-                );
-                return latestMinorVersions;
-            }
+        const parsedVersion = semver.parse(version);
 
-            const key = `${parsedVersion.major}.${parsedVersion.minor}`;
-            const previousVersion = latestMinorVersions[key];
-            if (!previousVersion || semver.gt(version, previousVersion)) {
-                latestMinorVersions[key] = version;
-            }
+        if (!parsedVersion) {
+            log.warning(
+                `Failed to parse Prettier version with semver: ${version}`
+            );
+            continue;
+        }
 
-            return latestMinorVersions;
-        },
-        {} as Record<string, string>
-    );
+        const key = `${parsedVersion.major}.${parsedVersion.minor}`;
+        const previousVersion = mappedLatestMinorVersions[key];
+        if (!previousVersion || semver.gt(version, previousVersion)) {
+            mappedLatestMinorVersions[key] = version;
+        }
+    }
 
-    return Object.values(mappedLatestMinorVersions).sort(semver.compare);
+    return objectValues(mappedLatestMinorVersions).toSorted(semver.compare);
 }
 
 async function runPrettierTests() {
     const prettierVersions = await fetchPrettierV3MinorVersions();
 
     log.info(
-        `Testing with prettier versions:\n${indent(prettierVersions.join("\n"))}`
+        `Testing with prettier versions:\n${indent(arrayJoin(prettierVersions, "\n"))}`
     );
 
     const versionPasses = await awaitedBlockingMap(
         prettierVersions,
-        async (version): Promise<{ version: string; success: boolean }> => {
+        async (version): Promise<{ success: boolean; version: string }> => {
             log.info(`\n\n>>>>>>>>>> Prettier v${version}\n`);
 
             try {
                 log.faint(`Installing Prettier v${version}...`);
                 await runShellCommand(
-                    `npm i -D --no-save prettier@${version}`,
+                    `npm i -D --min-release-age=0 --package-lock=false --no-save prettier@${version}`,
                     {
                         cwd: repoRootDirPath,
                         rejectOnError: true,
@@ -167,30 +169,29 @@ async function runPrettierTests() {
 
     log.faint(`Restoring Prettier v${currentPrettierVersion}...\n\n`);
     await runShellCommand(
-        `npm i -D --no-save prettier@${currentPrettierVersion}`,
+        `npm i -D --min-release-age=0 --package-lock=false --no-save prettier@${currentPrettierVersion}`,
         {
             cwd: repoRootDirPath,
             rejectOnError: true,
         }
     );
 
-    versionPasses.forEach(({ success, version }) => {
+    for (const { success, version } of versionPasses) {
         log.info(
             `Prettier v${version}: ${success ? logColors.success : logColors.error}${
                 success ? "pass" : "fail"
             }${logColors.reset}`
         );
-    });
-    const success = versionPasses.every(({ success }) => {
-        return success;
-    });
+    }
+    const success = versionPasses.every(
+        ({ success: versionSucceeded }) => versionSucceeded
+    );
 
     if (success) {
         log.success("Versioned tests passed.");
-        process.exit(0);
     } else {
         log.error("Versioned tests failed.");
-        process.exit(1);
+        process.exitCode = 1;
     }
 }
 

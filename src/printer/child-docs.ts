@@ -1,8 +1,24 @@
 import type { Doc } from "prettier";
 
-type Parents = { parent: Doc; childIndexInThisParent: number | undefined };
+import { arrayFirst, objectHasIn } from "ts-extras";
+
+interface Parents {
+    childIndexInThisParent: number | undefined;
+    parent: Doc;
+}
+
+type DocChildProperty = "contents" | "parts";
+
+function hasDocChildProperty<Key extends DocChildProperty>(
+    input: Doc,
+    key: Key
+): input is Doc & Record<Key, Doc> {
+    return objectHasIn(input, key);
+}
 
 /**
+ * Walk a Prettier doc tree from the given starting node.
+ *
  * @returns Boolean true means keep walking children and siblings, false means
  *   stop walking children and siblings. Returning false does not stop walking
  *   of aunts/uncles or ancestors.
@@ -10,70 +26,80 @@ type Parents = { parent: Doc; childIndexInThisParent: number | undefined };
 export function walkDoc({
     startDoc,
     debug,
-    callback,
+    callback: visitDoc,
     parents = [],
     index,
 }: Readonly<{
-    startDoc: Doc;
-    debug: boolean;
     callback: (
         currentDoc: Doc,
         parents: Parents[],
         index: number | undefined
-    ) => boolean | void | undefined;
-    parents?: Parents[];
+    ) => boolean | undefined;
+    debug: boolean;
     index?: number | undefined;
+    parents?: Parents[];
+    startDoc: Doc;
 }>): boolean {
     if (!startDoc) {
         return true;
     }
     if (debug) {
-        const parent = parents[0];
+        const parent = arrayFirst(parents);
+        const parentDoc = parent?.parent;
         console.info({
             firingCallbackFor: startDoc,
             status: "Calling callback",
             parent: parent
                 ? {
-                      isArray: Array.isArray(parent),
-                      type: (parent as any)?.type ?? typeof parent,
+                      isArray: Array.isArray(parentDoc),
+                      type:
+                          parentDoc && objectHasIn(parentDoc, "type")
+                              ? parentDoc.type
+                              : typeof parentDoc,
                   }
                 : undefined,
             index,
         });
     }
-    if (!callback(startDoc, parents, index)) {
-        // if the callback returns something falsy, don't try to walk its children
+    if (!visitDoc(startDoc, parents, index)) {
+        // If the callback returns something falsy, don't try to walk its children
         return false;
-    } else if (typeof startDoc === "string") {
+    }
+
+    if (typeof startDoc === "string") {
         return true;
-    } else if (Array.isArray(startDoc)) {
+    }
+
+    if (Array.isArray(startDoc)) {
         if (debug) {
             console.info("walking array children");
         }
-        // one a child returns false, abort walking this array
-        startDoc.every((innerDoc, index): boolean => {
-            return walkDoc({
+        // One a child returns false, abort walking this array
+        startDoc.every((innerDoc, childIndex): boolean =>
+            walkDoc({
                 startDoc: innerDoc,
                 debug,
-                callback,
+                callback: visitDoc,
                 parents: [
                     {
                         parent: startDoc,
-                        childIndexInThisParent: index,
+                        childIndexInThisParent: childIndex,
                     },
                     ...parents,
                 ],
-                index,
-            });
-        });
-    } else if ("contents" in startDoc) {
+                index: childIndex,
+            })
+        );
+    }
+
+    if (hasDocChildProperty(startDoc, "contents")) {
         if (debug) {
             console.info("walking contents property");
         }
         return walkDoc({
             startDoc: startDoc.contents,
             debug,
-            callback,
+            callback: visitDoc,
             parents: [
                 {
                     parent: startDoc,
@@ -83,14 +109,16 @@ export function walkDoc({
             ],
             index: undefined,
         });
-    } else if ("parts" in startDoc) {
+    }
+
+    if (hasDocChildProperty(startDoc, "parts")) {
         if (debug) {
             console.info("walking parts property");
         }
         return walkDoc({
             startDoc: startDoc.parts,
             debug,
-            callback,
+            callback: visitDoc,
             parents: [
                 {
                     parent: startDoc,

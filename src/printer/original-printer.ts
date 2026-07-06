@@ -1,14 +1,18 @@
 import type { Printer } from "prettier";
 
-let originalPrinter: Printer | undefined;
+const originalPrinterState: {
+    value: Printer | undefined;
+} = {
+    value: undefined,
+};
 
-export function setOriginalPrinter(input: Printer) {
-    originalPrinter = input;
+export function setOriginalPrinter(input: Printer): void {
+    originalPrinterState.value = input;
 }
 
 export function getOriginalPrinter(): Printer {
-    if (!originalPrinter) {
+    if (!originalPrinterState.value) {
         throw new Error("originalPrinter hasn't been defined yet!");
     }
-    return originalPrinter;
+    return originalPrinterState.value;
 }

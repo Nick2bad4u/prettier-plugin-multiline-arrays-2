@@ -1,19 +1,21 @@
-import { getObjectTypedKeys, mapObjectValues } from "@augment-vir/common";
-import {
-    type BooleanSupportOption,
-    type IntSupportOption,
-    type Parser,
-    type Plugin,
-    type Printer,
-    type RequiredOptions,
-    type StringSupportOption,
-    type SupportOption,
+import type {
+    BooleanSupportOption,
+    IntSupportOption,
+    Parser,
+    Plugin,
+    Printer,
+    RequiredOptions,
+    StringSupportOption,
+    SupportOption,
 } from "prettier";
+
+import { getObjectTypedKeys, mapObjectValues } from "@augment-vir/common";
 import { parsers as babelParsers } from "prettier/plugins/babel";
 import { parsers as tsParsers } from "prettier/plugins/typescript";
+
 import {
-    type MultilineArrayOptions,
     defaultMultilineArrayOptions,
+    type MultilineArrayOptions,
     optionHelp,
 } from "./options.js";
 import { wrapParser } from "./preprocessing.js";
@@ -31,9 +33,7 @@ export const parsers: Record<string, Parser> = mapObjectValues(
         json: babelParsers.json,
         json5: babelParsers.json5,
     },
-    (languageName, parserEntry) => {
-        return wrapParser(parserEntry, languageName);
-    }
+    (languageName, parserEntry) => wrapParser(parserEntry, languageName)
 );
 
 const printers: Record<string, Printer> = {
@@ -41,30 +41,48 @@ const printers: Record<string, Printer> = {
     "estree-json": multilineArrayPrinter,
 };
 
+function createOptions(): Record<keyof MultilineArrayOptions, SupportOption> {
+    const output = {} as Record<keyof MultilineArrayOptions, SupportOption>;
+
+    for (const key of getObjectTypedKeys(defaultMultilineArrayOptions)) {
+        const defaultValue = defaultMultilineArrayOptions[key];
+        const supportOption: SupportOption =
+            typeof defaultValue === "number"
+                ? ({
+                      name: key,
+                      type: "int",
+                      category: "multilineArray",
+                      default: defaultValue,
+                      description: optionHelp[key],
+                  } satisfies IntSupportOption)
+                : typeof defaultValue === "boolean"
+                  ? ({
+                        name: key,
+                        type: "boolean",
+                        category: "multilineArray",
+                        default: defaultValue,
+                        description: optionHelp[key],
+                    } satisfies BooleanSupportOption)
+                  : ({
+                        name: key,
+                        type: "string",
+                        category: "multilineArray",
+                        default: defaultValue,
+                        description: optionHelp[key],
+                    } satisfies StringSupportOption);
+        output[key] = supportOption;
+    }
+
+    return output;
+}
+
 export const options: Record<keyof MultilineArrayOptions, SupportOption> =
-    getObjectTypedKeys(defaultMultilineArrayOptions).reduce(
-        (accum, key) => {
-            const defaultValue = defaultMultilineArrayOptions[key];
-            const supportOption:
-                StringSupportOption | IntSupportOption | BooleanSupportOption =
-                {
-                    name: key,
-                    type: (typeof defaultValue === "number"
-                        ? "int"
-                        : typeof defaultValue) as
-                        "string" | "boolean" | "int" as any,
-                    category: "multilineArray",
-                    default: defaultValue,
-                    description: optionHelp[key],
-                };
-            accum[key] = supportOption;
-            return accum;
-        },
-        {} as Record<keyof MultilineArrayOptions, SupportOption>
-    );
+    createOptions();
 
 export const defaultOptions: Partial<RequiredOptions> &
-    Required<MultilineArrayOptions> = defaultMultilineArrayOptions;
+    Required<MultilineArrayOptions> = {
+    ...defaultMultilineArrayOptions,
+};
 
 /*
  * Augment Prettier's `Options` interface with multiline array options.
@@ -75,7 +93,7 @@ declare module "prettier" {
 }
 
 /** Not actually exported: this is just for type checking purposes. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- The sentinel validates named exports against Prettier's Plugin shape.
 const plugin: Plugin = {
     options,
     printers,

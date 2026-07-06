@@ -1,4 +1,5 @@
 import type { BaseNode } from "estree";
+
 import { extractTextBetweenRanges } from "../augments/array.js";
 
 export function containsTrailingComma({
@@ -6,11 +7,11 @@ export function containsTrailingComma({
     children,
     originalLines,
 }: Readonly<{
-    nodeLocation: BaseNode["loc"];
     children: (BaseNode | null)[];
+    nodeLocation: BaseNode["loc"];
     originalLines: string[];
 }>): boolean {
-    const lastElement = children[children.length - 1];
+    const [lastElement] = children.toReversed();
     if (lastElement) {
         const startLocation = lastElement.loc?.end;
         if (!startLocation) {

@@ -1,37 +1,35 @@
 import { getObjectTypedKeys, type Values } from "@augment-vir/common";
-import type { SupportOptionType as PrettierOptionType } from "prettier";
+import { objectHasIn, safeCastTo, stringSplit } from "ts-extras";
 
 export const envDebugKey = "MULTILINE_DEBUG";
 
 export const nextLinePatternComment =
     "prettier-multiline-arrays-next-line-pattern:";
-// all the text up until the comment trigger
-export const untilNextLinePatternCommentRegExp = new RegExp(
-    `.*${nextLinePatternComment}`
-);
 export const setLinePatternComment =
     "prettier-multiline-arrays-set-line-pattern:";
-// all the text up until the comment trigger
-export const untilSetLinePatternCommentRegExp = new RegExp(
-    `.*${setLinePatternComment}`
-);
 
 export const nextWrapThresholdComment =
     "prettier-multiline-arrays-next-threshold:";
-// all the text up until the comment trigger
-export const untilNextWrapThresholdCommentRegExp = new RegExp(
-    `.*${nextWrapThresholdComment}`
-);
 export const setWrapThresholdComment =
     "prettier-multiline-arrays-set-threshold:";
-// all the text up until the comment trigger
-export const untilSetWrapThresholdCommentRegExp = new RegExp(
-    `.*${setWrapThresholdComment}`
-);
 
 export const resetComment = "prettier-multiline-arrays-reset";
 
-export type MultilineArrayOptions = {
+export function stripTextUntilCommentTrigger(
+    input: string,
+    commentTrigger: string
+): string {
+    const triggerIndex = input.indexOf(commentTrigger);
+
+    if (triggerIndex === -1) {
+        return input;
+    }
+
+    return input.slice(triggerIndex + commentTrigger.length);
+}
+
+export interface MultilineArrayOptions {
+    multilineArraysLinePattern: string;
     /**
      * If there are MORE elements in the array than this, the array will be
      * forced to wrap.
@@ -42,8 +40,7 @@ export type MultilineArrayOptions = {
      * Set to 2 to only wrap if there are more than 2 element. Etc.
      */
     multilineArraysWrapThreshold: number;
-    multilineArraysLinePattern: string;
-};
+}
 
 export const optionHelp: Record<keyof MultilineArrayOptions, string> = {
     multilineArraysWrapThreshold: `A number indicating that all arrays should wrap when they have MORE than the specified number. Defaults to -1, indicating that no special wrapping enforcement will take place.\nExample: multilineArraysWrapThreshold: 3\nCan be overridden with a comment starting with ${nextWrapThresholdComment}.\nComment example: // ${nextWrapThresholdComment} 5`,
@@ -55,19 +52,18 @@ export const optionPropertyValidators: {
         input: unknown
     ) => input is MultilineArrayOptions[Property];
 } = {
-    multilineArraysWrapThreshold(input): input is number {
-        return typeof input === "number" && !isNaN(input);
-    },
+    multilineArraysWrapThreshold: (input): input is number =>
+        typeof input === "number" && !Number.isNaN(input),
     multilineArraysLinePattern(input): input is string {
         if (typeof input !== "string") {
             return false;
         }
 
-        const splitNumbers = input.split(" ");
+        const splitNumbers = stringSplit(input, " ");
 
         return splitNumbers.every((splitNumber) => {
             const numericSplit = Number(splitNumber);
-            return !isNaN(numericSplit);
+            return !Number.isNaN(numericSplit);
         });
     },
 };
@@ -79,26 +75,28 @@ export const defaultMultilineArrayOptions: MultilineArrayOptions = {
 
 const optionTypeToPrettierOptionTypeMapping: Record<
     string,
-    PrettierOptionType
+    MultilinePrettierOptionType
 > = {
     number: "int",
     boolean: "boolean",
     string: "string",
 } as const satisfies Record<
     "boolean" | "number" | "string",
-    PrettierOptionType
+    MultilinePrettierOptionType
 >;
+
+export type MultilinePrettierOptionType = "boolean" | "int" | "string";
 
 export function getPrettierOptionType(
     input: Values<MultilineArrayOptions>
-): PrettierOptionType {
+): MultilinePrettierOptionType {
     const mappedType = optionTypeToPrettierOptionTypeMapping[typeof input];
 
     if (mappedType) {
         return mappedType;
-    } else {
-        throw new Error(`Unmapped option type: '${typeof input}'`);
     }
+
+    throw new Error(`Unmapped option type: '${typeof input}'`);
 }
 
 export function fillInOptions<T extends object>(
@@ -110,19 +108,17 @@ export function fillInOptions<T extends object>(
     const newOptions: MultilineArrayOptions & T = {
         ...input,
     } as MultilineArrayOptions & T;
-    getObjectTypedKeys(defaultMultilineArrayOptions).forEach((optionsKey) => {
-        const inputValue: unknown = (input as any)[optionsKey];
+    for (const optionsKey of getObjectTypedKeys(defaultMultilineArrayOptions)) {
+        const inputValue: unknown = objectHasIn(input, optionsKey)
+            ? input[optionsKey]
+            : undefined;
         const defaultValue = defaultMultilineArrayOptions[optionsKey];
-        if (optionPropertyValidators[optionsKey](inputValue)) {
-            (newOptions as Record<typeof optionsKey, typeof inputValue>)[
-                optionsKey
-            ] = inputValue;
-        } else {
-            (newOptions as Record<typeof optionsKey, typeof defaultValue>)[
-                optionsKey
-            ] = defaultValue;
-        }
-    });
+        safeCastTo<Record<typeof optionsKey, typeof inputValue>>(newOptions)[
+            optionsKey
+        ] = optionPropertyValidators[optionsKey](inputValue)
+            ? inputValue
+            : defaultValue;
+    }
 
     return newOptions;
 }

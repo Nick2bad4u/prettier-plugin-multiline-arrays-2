@@ -1,33 +1,40 @@
+import type { Comment, Node } from "estree";
+
 import { check } from "@augment-vir/assert";
 import { getObjectTypedKeys } from "@augment-vir/common";
-import type { Comment, Node } from "estree";
+import {
+    arrayFirst,
+    arrayJoin,
+    isEmpty,
+    safeCastTo,
+    setHas,
+    stringSplit,
+} from "ts-extras";
+
 import {
     nextLinePatternComment,
     nextWrapThresholdComment,
     resetComment,
     setLinePatternComment,
     setWrapThresholdComment,
-    untilNextLinePatternCommentRegExp,
-    untilNextWrapThresholdCommentRegExp,
-    untilSetLinePatternCommentRegExp,
-    untilSetWrapThresholdCommentRegExp,
+    stripTextUntilCommentTrigger,
 } from "../options.js";
 import { extractComments } from "./comments.js";
 import { isArrayLikeNode } from "./supported-node-types.js";
 
-type LineNumberDetails<T> = { [lineNumber: string]: T };
+type LineNumberDetails<T> = Record<string, T>;
 export type LineCounts = LineNumberDetails<number[]>;
 export type WrapThresholds = LineNumberDetails<number>;
 export type CommentTriggerWithEnding<T> = {
     [P in keyof T]: { data: T[P]; lineEnd: number };
 };
 
-export type CommentTriggers = {
+export interface CommentTriggers {
     nextLineCounts: LineCounts;
-    setLineCounts: CommentTriggerWithEnding<LineCounts>;
     nextWrapThresholds: WrapThresholds;
+    setLineCounts: CommentTriggerWithEnding<LineCounts>;
     setWrapThresholds: CommentTriggerWithEnding<WrapThresholds>;
-};
+}
 
 type InternalCommentTriggers = CommentTriggers & {
     resets: number[];
@@ -35,7 +42,7 @@ type InternalCommentTriggers = CommentTriggers & {
 
 const mappedCommentTriggers = new WeakMap<Node, CommentTriggers>();
 
-const ignoredAstChildKeys: string[] = [
+const ignoredAstChildKeys = new Set([
     "comments",
     "leadingComments",
     "loc",
@@ -44,15 +51,15 @@ const ignoredAstChildKeys: string[] = [
     "tokens",
     "trailingComments",
     "value",
-];
+] as const);
 
-const descendantBoundaryTypes: string[] = [
+const descendantBoundaryTypes = new Set([
     "ArrowFunctionExpression",
     "ClassDeclaration",
     "ClassExpression",
     "FunctionDeclaration",
     "FunctionExpression",
-];
+] as const);
 
 export function getCommentTriggers(key: Node, debug: boolean): CommentTriggers {
     const alreadyExisting = mappedCommentTriggers.get(key);
@@ -63,7 +70,7 @@ export function getCommentTriggers(key: Node, debug: boolean): CommentTriggers {
 }
 
 function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
-    // parse comments only on the root node so it only happens once
+    // Parse comments only on the root node so it only happens once
     const comments: Comment[] = extractComments(rootNode);
     if (debug) {
         console.info({
@@ -79,65 +86,69 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
         resets: [],
     };
 
-    const internalCommentTriggers: InternalCommentTriggers = comments.reduce(
-        (accum: InternalCommentTriggers, currentComment) => {
-            const commentText = (
-                currentComment.value as string | undefined
-            )?.replace(/\n/g, " ");
+    const internalCommentTriggers: InternalCommentTriggers = starterTriggers;
 
-            if (!currentComment.loc) {
-                throw new Error(
-                    `Cannot read line location for comment ${currentComment.value}`
-                );
-            }
+    for (const currentComment of comments) {
+        const commentText = safeCastTo<string | undefined>(
+            currentComment.value
+        )?.replaceAll("\n", " ");
 
-            const nextLineCounts = getLineCounts({
-                commentText,
-                nextOnly: true,
-                debug,
-            });
-            if (nextLineCounts.length) {
-                accum.nextLineCounts[currentComment.loc.end.line] =
-                    nextLineCounts;
-            }
+        if (!currentComment.loc) {
+            throw new Error(
+                `Cannot read line location for comment ${currentComment.value}`
+            );
+        }
 
-            const nextWrapThreshold = getWrapThreshold(commentText, true);
-            if (nextWrapThreshold != undefined) {
-                accum.nextWrapThresholds[currentComment.loc.end.line] =
-                    nextWrapThreshold;
-            }
+        const nextLineCounts = getLineCounts({
+            commentText,
+            nextOnly: true,
+            debug,
+        });
+        if (nextLineCounts.length > 0) {
+            internalCommentTriggers.nextLineCounts[
+                currentComment.loc.end.line
+            ] = nextLineCounts;
+        }
 
-            const setLineCounts = getLineCounts({
-                commentText,
-                nextOnly: false,
-                debug,
-            });
-            if (setLineCounts.length) {
-                accum.setLineCounts[currentComment.loc.end.line] = {
+        const nextWrapThreshold = getWrapThreshold(commentText, true);
+        if (nextWrapThreshold != undefined) {
+            internalCommentTriggers.nextWrapThresholds[
+                currentComment.loc.end.line
+            ] = nextWrapThreshold;
+        }
+
+        const setLineCounts = getLineCounts({
+            commentText,
+            nextOnly: false,
+            debug,
+        });
+        if (setLineCounts.length > 0) {
+            internalCommentTriggers.setLineCounts[currentComment.loc.end.line] =
+                {
                     data: setLineCounts,
                     lineEnd: Infinity,
                 };
-            }
+        }
 
-            const setWrapThreshold = getWrapThreshold(commentText, false);
-            if (setWrapThreshold != undefined) {
-                accum.setWrapThresholds[currentComment.loc.end.line] = {
-                    data: setWrapThreshold,
-                    lineEnd: Infinity,
-                };
-            }
+        const setWrapThreshold = getWrapThreshold(commentText, false);
+        if (setWrapThreshold != undefined) {
+            internalCommentTriggers.setWrapThresholds[
+                currentComment.loc.end.line
+            ] = {
+                data: setWrapThreshold,
+                lineEnd: Infinity,
+            };
+        }
 
-            const resetComment = isResetComment(commentText);
-            if (resetComment) {
-                accum.resets.push(currentComment.loc.end.line);
-            }
+        const shouldReset = isResetComment(commentText);
+        if (shouldReset) {
+            internalCommentTriggers.resets.push(currentComment.loc.end.line);
+        }
+    }
 
-            return accum;
-        },
-        starterTriggers
+    internalCommentTriggers.resets.sort(
+        (firstLine, secondLine) => firstLine - secondLine
     );
-
-    internalCommentTriggers.resets.sort();
 
     setResets(internalCommentTriggers);
     mapNextCommentTriggers({
@@ -148,9 +159,9 @@ function setCommentTriggers(rootNode: Node, debug: boolean): CommentTriggers {
     const commentTriggers = {
         ...internalCommentTriggers,
     };
-    delete (commentTriggers as Partial<InternalCommentTriggers>).resets;
+    delete safeCastTo<Partial<InternalCommentTriggers>>(commentTriggers).resets;
 
-    // save to a map so we don't have to recalculate these every time
+    // Save to a map so we don't have to recalculate these every time
     mappedCommentTriggers.set(rootNode, commentTriggers);
     return commentTriggers;
 }
@@ -179,60 +190,54 @@ function mapNextLineTriggers<T>({
     rootNode: Node;
     triggers: LineNumberDetails<T>;
 }>): LineNumberDetails<T> {
-    return getObjectTypedKeys(triggers).reduce<LineNumberDetails<T>>(
-        (mappedTriggers, triggerLineNumber) => {
-            const trigger = triggers[triggerLineNumber];
-            const targetLineNumber = findArrayLikeTargetLine({
-                nextLineNumber: Number(triggerLineNumber) + 1,
-                rootNode,
-            });
+    const mappedTriggers: LineNumberDetails<T> = {};
 
-            if (targetLineNumber == undefined || trigger == undefined) {
-                return mappedTriggers;
-            }
+    for (const triggerLineNumber of getObjectTypedKeys(triggers)) {
+        const trigger = triggers[triggerLineNumber];
+        const targetLineNumber = findArrayLikeTargetLine({
+            nextLineNumber: Number(triggerLineNumber) + 1,
+            rootNode,
+        });
 
-            return {
-                ...mappedTriggers,
-                [targetLineNumber]: trigger,
-            };
-        },
-        {}
-    );
+        if (targetLineNumber != undefined && trigger != undefined) {
+            mappedTriggers[targetLineNumber] = trigger;
+        }
+    }
+
+    return mappedTriggers;
 }
 
 function findArrayLikeTargetLine({
     rootNode,
     nextLineNumber,
 }: Readonly<{
-    rootNode: Node;
     nextLineNumber: number;
+    rootNode: Node;
 }>): number | undefined {
-    return findAstNodesStartingOnLine({
+    const descendantLines = findAstNodesStartingOnLine({
         lineNumber: nextLineNumber,
         rootNode,
-    })
-        .flatMap((node) => {
-            return findArrayLikeDescendantLines({
-                rootNode: node,
-            });
+    }).flatMap((node) =>
+        findArrayLikeDescendantLines({
+            rootNode: node,
         })
-        .toSorted((firstLine, secondLine) => {
-            return firstLine - secondLine;
-        })[0];
+    );
+
+    return descendantLines.length > 0
+        ? Math.min(...descendantLines)
+        : undefined;
 }
 
 function findAstNodesStartingOnLine({
     rootNode,
     lineNumber,
 }: Readonly<{
-    rootNode: Node;
     lineNumber: number;
+    rootNode: Node;
 }>): Node[] {
     return collectAstNodes({
         input: rootNode,
-        shouldInclude: (node) => {
-            return node.loc?.start.line === lineNumber;
-        },
+        shouldInclude: (node) => node.loc?.start.line === lineNumber,
     });
 }
 
@@ -243,12 +248,9 @@ function findArrayLikeDescendantLines({
 }>): number[] {
     return collectAstNodes({
         input: rootNode,
-        shouldInclude: (node) => {
-            return isArrayLikeNode(node) && !!node.loc;
-        },
-        shouldWalkChildren: (node, isRootNode) => {
-            return isRootNode || !descendantBoundaryTypes.includes(node.type);
-        },
+        shouldInclude: (node) => isArrayLikeNode(node) && Boolean(node.loc),
+        shouldWalkChildren: (node, isRootNode) =>
+            isRootNode || !setHas(descendantBoundaryTypes, node.type),
     }).flatMap((node) => {
         if (!node.loc) {
             return [];
@@ -266,25 +268,25 @@ function collectAstNodes({
     isRootNode = true,
 }: Readonly<{
     input: unknown;
+    isRootNode?: boolean | undefined;
+    seenInputs?: undefined | WeakSet<object>;
     shouldInclude: (node: Node, isRootNode: boolean) => boolean;
     shouldWalkChildren?:
         ((node: Node, isRootNode: boolean) => boolean) | undefined;
-    seenInputs?: WeakSet<object> | undefined;
-    isRootNode?: boolean | undefined;
 }>): Node[] {
     if (check.isArray(input)) {
-        return input.flatMap((child) => {
-            return collectAstNodes({
+        return input.flatMap((child) =>
+            collectAstNodes({
                 input: child,
                 isRootNode: false,
                 seenInputs,
                 shouldInclude,
                 shouldWalkChildren,
-            });
-        });
-    } else if (!check.isObject(input)) {
-        return [];
-    } else if (seenInputs.has(input)) {
+            })
+        );
+    }
+
+    if (!check.isObject(input) || seenInputs.has(input)) {
         return [];
     }
 
@@ -297,7 +299,7 @@ function collectAstNodes({
     const matchingNode = shouldInclude(input, isRootNode) ? [input] : [];
     const childNodes = shouldWalkChildren(input, isRootNode)
         ? getObjectTypedKeys(input).flatMap((nodeKey) => {
-              if (ignoredAstChildKeys.includes(String(nodeKey))) {
+              if (setHas(ignoredAstChildKeys, String(nodeKey))) {
                   return [];
               }
 
@@ -318,16 +320,30 @@ function isAstNode(input: object): input is Node {
     return check.isObject(input) && check.isString(input.type);
 }
 
+function isIntegerString(entry: string): boolean {
+    if (entry.length === 0) {
+        return false;
+    }
+
+    for (const character of entry) {
+        if (character < "0" || character > "9") {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function setResets(internalCommentTriggers: InternalCommentTriggers): void {
-    if (!internalCommentTriggers.resets.length) {
+    if (isEmpty(internalCommentTriggers.resets)) {
         return;
     }
 
     const setLineCountLineNumbers = getObjectTypedKeys(
         internalCommentTriggers.setLineCounts
     );
-    if (setLineCountLineNumbers.length) {
-        setLineCountLineNumbers.forEach((lineNumber) => {
+    if (setLineCountLineNumbers.length > 0) {
+        for (const lineNumber of setLineCountLineNumbers) {
             const currentLineNumberStats =
                 internalCommentTriggers.setLineCounts[lineNumber];
             if (!currentLineNumberStats) {
@@ -339,13 +355,12 @@ function setResets(internalCommentTriggers: InternalCommentTriggers): void {
             }
             const endLineNumber: number =
                 internalCommentTriggers.resets.find(
-                    (resetLineNumber): boolean => {
-                        return Number(lineNumber) < resetLineNumber;
-                    }
+                    (resetLineNumber): boolean =>
+                        Number(lineNumber) < resetLineNumber
                 ) ?? currentLineNumberStats.lineEnd;
 
             currentLineNumberStats.lineEnd = endLineNumber;
-        });
+        }
     }
 }
 
@@ -356,97 +371,92 @@ function getWrapThreshold(
     const searchText = nextOnly
         ? nextWrapThresholdComment
         : setWrapThresholdComment;
-    const searchRegExp = nextOnly
-        ? untilNextWrapThresholdCommentRegExp
-        : untilSetWrapThresholdCommentRegExp;
 
     if (commentText?.toLowerCase().includes(searchText)) {
         const thresholdValue = Number(
-            commentText.toLowerCase().replace(searchRegExp, "").trim()
+            stripTextUntilCommentTrigger(
+                commentText.toLowerCase(),
+                searchText
+            ).trim()
         );
-        if (isNaN(thresholdValue)) {
+        if (Number.isNaN(thresholdValue)) {
             return undefined;
-        } else {
-            return thresholdValue;
         }
-    } else {
-        return undefined;
+
+        return thresholdValue;
     }
+
+    return undefined;
 }
 
 export function parseNextLineCounts({
     input,
     nextOnly,
     debug,
-}: Readonly<{ input: string; nextOnly: boolean; debug: boolean }>): number[] {
+}: Readonly<{ debug: boolean; input: string; nextOnly: boolean }>): number[] {
     if (!input) {
         return [];
     }
 
-    const searchRegExp = nextOnly
-        ? untilNextLinePatternCommentRegExp
-        : untilSetLinePatternCommentRegExp;
+    const searchText = nextOnly
+        ? nextLinePatternComment
+        : setLinePatternComment;
 
-    const split = input
-        .toLowerCase()
-        .replace(searchRegExp, "")
-        .replace(/,/g, "")
-        .split(" ")
-        .filter((entry) => !!entry);
+    let split = stringSplit(
+        stripTextUntilCommentTrigger(
+            input.toLowerCase(),
+            searchText
+        ).replaceAll(",", ""),
+        " "
+    ).filter(Boolean);
 
-    const firstSplit = split[0];
+    const firstSplit = arrayFirst(split);
     if (firstSplit === "[") {
-        split.splice(0, 1);
+        split = split.slice(1);
     } else if (firstSplit?.startsWith("[")) {
-        split[0] = firstSplit.replace(/^\[/, "");
+        split[0] = firstSplit.slice(1);
     }
 
-    const lastSplitIndex = split.length - 1;
-    const lastSplit = split[lastSplitIndex];
+    const [lastSplit] = split.toReversed();
     if (lastSplit === "]") {
-        split.splice(split.length - 1, 1);
+        split = split.slice(0, -1);
     } else if (lastSplit?.endsWith("]")) {
-        split[lastSplitIndex] = lastSplit.replace(/\]$/, "");
+        const lastSplitIndex = split.length - 1;
+        split[lastSplitIndex] = lastSplit.slice(0, -1);
     }
 
     const numbers = split.map((entry) =>
-        entry && !!entry.trim().match(/^\d+$/) ? Number(entry.trim()) : NaN
+        isIntegerString(entry.trim()) ? Number(entry.trim()) : NaN
     );
 
     const invalidNumbers = numbers
-        .map((entry, index) => {
-            return {
-                index,
-                entry,
-                original: split[index],
-            };
-        })
-        .filter((entry) => {
-            return isNaN(entry.entry);
-        });
+        .map((entry, index) => ({
+            index,
+            entry,
+            original: split[index],
+        }))
+        .filter((entry) => Number.isNaN(entry.entry));
 
-    if (invalidNumbers.length) {
+    if (invalidNumbers.length > 0) {
         if (debug) {
             console.error(
-                invalidNumbers.map((entry) => {
-                    return {
-                        index: entry.index,
-                        original: entry.original,
-                        parsed: entry,
-                        split,
-                        input,
-                        numbers,
-                        trim: entry.original?.trim(),
-                        match: entry.original?.trim().match(/^\d+$/),
-                        matched: !!entry.original?.trim().match(/^\d+$/),
-                    };
-                })
+                invalidNumbers.map((entry) => ({
+                    index: entry.index,
+                    original: entry.original,
+                    parsed: entry,
+                    split,
+                    input,
+                    numbers,
+                    trim: entry.original?.trim(),
+                    matched: isIntegerString(entry.original?.trim() ?? ""),
+                }))
             );
         }
         console.error(
-            `Invalid number(s) for elements per line option/comment: ${invalidNumbers
-                .map((entry) => entry.original)
-                .join()}`
+            `Invalid number(s) for elements per line option/comment: ${arrayJoin(
+                invalidNumbers.map((entry) => entry.original),
+                ","
+            )}`
         );
         return [];
     }
@@ -454,7 +464,7 @@ export function parseNextLineCounts({
 }
 
 function isResetComment(commentText: string | undefined): boolean {
-    return !!commentText?.toLowerCase().includes(resetComment);
+    return Boolean(commentText?.toLowerCase().includes(resetComment));
 }
 
 function getLineCounts({
@@ -463,8 +473,8 @@ function getLineCounts({
     debug,
 }: Readonly<{
     commentText: string | undefined;
-    nextOnly: boolean;
     debug: boolean;
+    nextOnly: boolean;
 }>): number[] {
     const searchText = nextOnly
         ? nextLinePatternComment
@@ -476,7 +486,7 @@ function getLineCounts({
             nextOnly,
             debug,
         });
-    } else {
-        return [];
     }
+
+    return [];
 }

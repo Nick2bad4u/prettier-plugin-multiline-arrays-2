@@ -1,22 +1,24 @@
 import type { ArrayExpression, ArrayPattern, BaseNode, Node } from "estree";
 
+import { setHas } from "ts-extras";
+
 type TSTupleType = BaseNode & {
-    type: "TSTupleType";
     elementTypes: (BaseNode | null)[];
+    type: "TSTupleType";
 };
 
 export type ArrayLikeNode = ArrayExpression | ArrayPattern | TSTupleType;
 
-const arrayLikeNodeTypes: string[] = [
+const arrayLikeNodeTypes = new Set<string>([
     "ArrayExpression",
     "ArrayPattern",
-    // this expression type isn't accounted for in the types, but I saw it used in another plugin
-    "TupleExpression",
     "TSTupleType",
-];
+    // This expression type isn't accounted for in the types, but I saw it used in another plugin
+    "TupleExpression",
+]);
 
 export function isArrayLikeNode(node: Node): boolean {
-    return arrayLikeNodeTypes.includes(node.type);
+    return setHas<string>(arrayLikeNodeTypes, node.type);
 }
 
 export function getArrayLikeElements(node: ArrayLikeNode): (BaseNode | null)[] {

@@ -1,17 +1,25 @@
 import type { Options } from "prettier";
-// @ts-expect-error: ignore this import cause it's not typed. This file itself is manually typing it.
-import importedRepoConfig from "../../prettier.config.mjs";
 
-export const repoConfig: Options = importedRepoConfig as Options;
+import prettierConfig from "prettier-config-nick2bad4u";
+import { safeCastTo } from "ts-extras";
 
-Object.assign(repoConfig, {
+import * as localPlugin from "../index.js";
+
+const typedRepoConfig = safeCastTo<Options>(prettierConfig);
+
+export const repoConfig: Options = {
+    ...typedRepoConfig,
     bracketSpacing: false,
     jsonRecursiveSort: false,
-    plugins: (repoConfig.plugins ?? []).filter(
-        (plugin) => plugin !== "prettier-plugin-sort-json"
-    ),
+    plugins: [
+        ...(typedRepoConfig.plugins ?? []).filter(
+            (plugin) => plugin !== "prettier-plugin-sort-json"
+        ),
+        "prettier-plugin-organize-imports",
+        localPlugin,
+    ],
     printWidth: 100,
     singleQuote: true,
     tabWidth: 4,
     trailingComma: "all",
-} satisfies Options);
+};

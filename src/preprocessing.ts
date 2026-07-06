@@ -1,24 +1,62 @@
-import { stringify } from "@augment-vir/common";
 import type { Parser, ParserOptions, Plugin, Printer } from "prettier";
+
+import { stringify } from "@augment-vir/common";
 import { createWrappedMultiTargetProxy } from "proxy-vir";
+import { not, objectHasIn } from "ts-extras";
+
 import { pluginMarker } from "./plugin-marker.js";
 import { createMultilineArrayPrinter } from "./printer/multiline-array-printer.js";
 import { setOriginalPrinter } from "./printer/original-printer.js";
 
-type SetOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
 /** Prettier's type definitions are not true. */
-type ActualParserOptions = SetOptional<ParserOptions, "plugins"> &
+type ActualParserOptions = Partial<Pick<ParserOptions, "plugins">> &
     Partial<{
         astFormat: string;
         printer: Printer;
-    }>;
+    }> &
+    Pick<ParserOptions, Exclude<keyof ParserOptions, "plugins">>;
+
+type PreprocessStep = (previousProcessedText: string) => Promise<string>;
+
+function hasThisPluginMarker(
+    plugin: unknown
+): plugin is Plugin & { pluginMarker: unknown } {
+    return (
+        typeof plugin === "object" &&
+        plugin != undefined &&
+        !(plugin instanceof URL) &&
+        objectHasIn(plugin, "pluginMarker") &&
+        plugin.pluginMarker === pluginMarker
+    );
+}
+
+async function runPreprocessSteps(
+    preprocessSteps: readonly PreprocessStep[],
+    text: string,
+    index = 0
+): Promise<string> {
+    const preprocessStep = preprocessSteps[index];
+    if (!preprocessStep) {
+        return text;
+    }
+
+    return runPreprocessSteps(
+        preprocessSteps,
+        await preprocessStep(text),
+        index + 1
+    );
+}
 
 function addMultilinePrinter(options: ActualParserOptions): void {
-    if ("printer" in options) {
-        setOriginalPrinter(options.printer);
+    if (objectHasIn(options, "printer")) {
+        const originalPrinter = options.printer;
+        if (!originalPrinter) {
+            throw new Error("Could not find printer while adding printer.");
+        }
+
+        setOriginalPrinter(originalPrinter);
         /** Overwrite the printer with ours. */
-        options.printer = createMultilineArrayPrinter(options.printer);
+        options.printer = createMultilineArrayPrinter(originalPrinter);
     } else {
         const astFormat = options.astFormat;
         if (!astFormat) {
@@ -30,29 +68,37 @@ function addMultilinePrinter(options: ActualParserOptions): void {
          */
         const plugins = options.plugins ?? [];
         const firstMatchedPlugin = plugins.find(
-            (plugin): plugin is Plugin =>
-                typeof plugin !== "string" &&
-                !(plugin instanceof URL) &&
-                !!plugin.printers &&
-                !!plugin.printers[astFormat]
+            (
+                plugin
+            ): plugin is Plugin & { printers: Record<string, Printer> } => {
+                if (typeof plugin === "string" || plugin instanceof URL) {
+                    return false;
+                }
+
+                const printers = plugin.printers;
+                if (!printers) {
+                    return false;
+                }
+
+                const matchedPrinter = printers[astFormat];
+                return Boolean(matchedPrinter);
+            }
         );
         if (!firstMatchedPlugin || typeof firstMatchedPlugin === "string") {
             throw new Error(
-                `Matched invalid first plugin: ${firstMatchedPlugin}`
+                `Matched invalid first plugin: ${String(firstMatchedPlugin)}`
             );
         }
-        const matchedPrinter = firstMatchedPlugin.printers?.[astFormat];
+        const matchedPrinter = firstMatchedPlugin.printers[astFormat];
         if (!matchedPrinter) {
             throw new Error(
                 `Printer not found on matched plugin: ${stringify(firstMatchedPlugin)}`
             );
         }
         setOriginalPrinter(matchedPrinter);
-        const thisPluginIndex = plugins.findIndex((plugin) => {
-            return (
-                (plugin as { pluginMarker: any }).pluginMarker === pluginMarker
-            );
-        });
+        const thisPluginIndex = plugins.findIndex((plugin) =>
+            hasThisPluginMarker(plugin)
+        );
         const thisPlugin = plugins[thisPluginIndex];
         if (!thisPlugin) {
             throw new Error("This plugin was not found.");
@@ -62,26 +108,37 @@ function addMultilinePrinter(options: ActualParserOptions): void {
          * Add this plugin to the beginning of the array so its printer is found
          * first.
          */
-        plugins.splice(thisPluginIndex, 1);
-        plugins.splice(0, 0, thisPlugin);
+        options.plugins = [
+            thisPlugin,
+            ...plugins.toSpliced(thisPluginIndex, 1),
+        ];
     }
 }
 
 function findPluginsByParserName(
     parserName: string,
-    plugins: (Plugin | URL | string)[]
+    plugins: (Plugin | string | URL)[]
 ): Plugin[] {
     return plugins.filter((plugin): plugin is Plugin => {
-        return (
-            typeof plugin === "object" &&
-            !(plugin instanceof URL) &&
-            (plugin as { pluginMarker: any }).pluginMarker !== pluginMarker &&
-            !!plugin.parsers?.[parserName]
-        );
+        if (
+            typeof plugin !== "object" ||
+            plugin instanceof URL ||
+            hasThisPluginMarker(plugin)
+        ) {
+            return false;
+        }
+
+        const parsers = plugin.parsers;
+        if (!parsers) {
+            return false;
+        }
+
+        const matchedParser = parsers[parserName];
+        return Boolean(matchedParser);
     });
 }
 
-export function wrapParser(originalParser: Parser, parserName: string) {
+export function wrapParser(originalParser: Parser, parserName: string): Parser {
     /**
      * Create a multi-target proxy of parsers so that we don't block other
      * plugins.
@@ -99,39 +156,39 @@ export function wrapParser(originalParser: Parser, parserName: string) {
             parserName,
             pluginsFromOptions
         );
-        pluginsWithRelevantParsers.forEach((plugin) => {
+        for (const plugin of pluginsWithRelevantParsers) {
             const currentParser = plugin.parsers?.[parserName];
             if (
                 currentParser &&
                 (
-                    plugin as { name?: string | undefined } | undefined
+                    plugin as undefined | { name?: string | undefined }
                 )?.name?.includes("prettier-plugin-sort-json")
             ) {
                 parserProxy.proxyModifier.addOverrideTarget(currentParser);
             }
-        });
+        }
 
         const pluginsWithPreprocessor = pluginsWithRelevantParsers.filter(
-            (plugin) => !!plugin.parsers?.[parserName]?.preprocess
+            (plugin) => Boolean(plugin.parsers?.[parserName]?.preprocess)
         );
 
-        let processedText = text;
+        const preprocessSteps: PreprocessStep[] = pluginsWithPreprocessor.map(
+            (pluginWithPreprocessor) =>
+                async (previousProcessedText: string) => {
+                    const nextText = await pluginWithPreprocessor.parsers?.[
+                        parserName
+                    ]?.preprocess?.(previousProcessedText, {
+                        ...options,
+                        plugins: pluginsFromOptions.filter(
+                            not(hasThisPluginMarker)
+                        ),
+                    } as unknown as ParserOptions);
 
-        for (const pluginWithPreprocessor of pluginsWithPreprocessor) {
-            const nextText = await pluginWithPreprocessor.parsers?.[
-                parserName
-            ]?.preprocess?.(processedText, {
-                ...options,
-                plugins: pluginsFromOptions.filter(
-                    (plugin) =>
-                        (plugin as { pluginMarker: any }).pluginMarker !==
-                        pluginMarker
-                ),
-            } as ParserOptions);
-            if (nextText != undefined) {
-                processedText = nextText;
-            }
-        }
+                    return nextText ?? previousProcessedText;
+                }
+        );
+
+        const processedText = await runPreprocessSteps(preprocessSteps, text);
 
         addMultilinePrinter(options);
 

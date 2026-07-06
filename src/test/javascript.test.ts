@@ -1,4 +1,5 @@
-import { describe } from "@augment-vir/test";
+import { describe } from "vitest";
+
 import { capitalizeFirst } from "../augments/string.js";
 import {
     nextLinePatternComment,
@@ -40,7 +41,7 @@ const javascriptTests: MultilineArrayTest[] = [
             const thingieArray = ['hello'];
         `,
         options: {
-            multilineArraysWrapThreshold: "fifty two" as any,
+            multilineArraysWrapThreshold: "fifty two" as unknown as number,
         },
         failureMessage:
             'Invalid multilineArraysWrapThreshold value. Expected an integer, but received "fifty two".',
@@ -101,7 +102,7 @@ const javascriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        // this was causing an error on the closing "}" at one point
+        // This was causing an error on the closing "}" at one point
         it: "interpolated string example",
         code: `
             if (children.length) {
@@ -166,7 +167,7 @@ const javascriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        // caused a max call stack exceeded error once
+        // Caused a max call stack exceeded error once
         it: "single object element with multiline template",
         code: `
         
@@ -644,7 +645,7 @@ const javascriptTests: MultilineArrayTest[] = [
             };
         `,
     },
-    // the following test caught that path.getValue() can return undefined.
+    // The following test caught that path.getValue() can return undefined.
     {
         it: "array with an earlier function definition",
         code: `

@@ -1,15 +1,19 @@
-import { assert, check } from "@augment-vir/assert";
+import { check } from "@augment-vir/assert";
 import {
     omitObjectKeys,
     type PartialWithNullable,
     removeColor,
     removeNullishValues,
 } from "@augment-vir/common";
-import { it } from "@augment-vir/test";
-import { format as prettierFormat } from "prettier";
-import type { Options as PrettierOptions } from "prettier";
-import { type MultilineArrayOptions } from "../options.js";
+import * as prettier from "prettier";
+import { objectHasIn } from "ts-extras";
+import { expect, it } from "vitest";
+
+import type { MultilineArrayOptions } from "../options.js";
+
 import { repoConfig } from "./prettier-config.js";
+
+type PrettierOptions = prettier.Options;
 
 async function runPrettierFormat({
     code,
@@ -25,60 +29,92 @@ async function runPrettierFormat({
         | undefined;
     parser: string | undefined;
 }>): Promise<string> {
-    if (extension.startsWith(".")) {
-        extension = extension.slice(1);
-    }
+    const normalizedExtension = extension.startsWith(".")
+        ? extension.slice(1)
+        : extension;
 
     const filepathOptions: Partial<Pick<PrettierOptions, "filepath">> =
         check.isString(options.filepath)
             ? {
                   filepath: options.filepath,
               }
-            : "filepath" in options
+            : objectHasIn(options, "filepath")
               ? {}
               : {
-                    filepath: `blah.${extension}`,
+                    filepath: `blah.${normalizedExtension}`,
                 };
 
     const prettierOptions: PrettierOptions = {
         ...repoConfig,
         ...removeNullishValues(omitObjectKeys(options, ["filepath"])),
         ...filepathOptions,
-        ...(parser
-            ? {
-                  parser,
-              }
-            : {}),
+        ...(parser && {
+            parser,
+        }),
     };
 
-    return await prettierFormat(code, prettierOptions);
+    return await prettier.format(code, prettierOptions);
 }
 
-export type MultilineArrayTest = {
-    it: string;
+export interface MultilineArrayTest {
     code: string;
     expect?: string | undefined;
+    failureMessage?: string;
+    it: string;
+    only?: true;
     options?:
         | (Partial<MultilineArrayOptions> &
               PartialWithNullable<PrettierOptions>)
         | undefined;
-    only?: true;
     skip?: true;
-    failureMessage?: string;
+}
+
+const testRunState = {
+    allPassed: true,
+    forced: false,
 };
 
-let forced = false;
+function removeLeadingBlankLine(input: string): string {
+    const firstNewLineIndex = input.indexOf("\n");
 
-let allPassed = true;
+    if (
+        firstNewLineIndex === -1 ||
+        input.slice(0, firstNewLineIndex).trim() !== ""
+    ) {
+        return input;
+    }
+
+    return input.slice(firstNewLineIndex + 1).trimStart();
+}
+
+function isIndentOnly(input: string): boolean {
+    for (const character of input) {
+        if (character !== "\t" && character !== " ") {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function removeTrailingIndent(input: string): string {
+    const lastNewLineIndex = input.lastIndexOf("\n");
+    const trailingIndent = input.slice(lastNewLineIndex + 1);
+
+    if (
+        lastNewLineIndex === -1 ||
+        trailingIndent.length === 0 ||
+        !isIndentOnly(trailingIndent)
+    ) {
+        return input;
+    }
+
+    return input.slice(0, lastNewLineIndex + 1);
+}
 
 function removeIndent(input: string): string {
-    return (
-        input
-            .replace(/^\s*\n\s*/, "")
-            .replace(/\n {12}/g, "\n")
-            // this is only used for tests
-
-            .replace(/\n[ \t]+$/, "\n")
+    return removeTrailingIndent(
+        removeLeadingBlankLine(input).replaceAll("\n            ", "\n")
     );
 }
 
@@ -88,11 +124,11 @@ export function runTests({
     parser,
 }: Readonly<{
     extension: string;
-    tests: MultilineArrayTest[];
     parser: string;
-}>) {
-    tests.forEach((test) => {
-        async function testCallback() {
+    tests: MultilineArrayTest[];
+}>): void {
+    function createTestCallback(test: MultilineArrayTest) {
+        return async function testCallback() {
             try {
                 const inputCode = removeIndent(test.code);
                 const expected = removeIndent(test.expect ?? test.code);
@@ -102,12 +138,12 @@ export function runTests({
                     options: test.options,
                     parser,
                 });
-                assert.strictEquals(formatted, expected);
+                expect(formatted).toBe(expected);
                 if (formatted !== expected) {
-                    allPassed = false;
+                    testRunState.allPassed = false;
                 }
             } catch (error) {
-                allPassed = false;
+                testRunState.allPassed = false;
                 if (test.failureMessage && error instanceof Error) {
                     const strippedMessage = removeColor(error.message);
                     if (test.failureMessage !== strippedMessage) {
@@ -115,33 +151,33 @@ export function runTests({
                             strippedMessage,
                         });
                     }
-                    assert.strictEquals(
-                        removeColor(strippedMessage),
+                    expect(removeColor(strippedMessage)).toBe(
                         test.failureMessage
                     );
                 } else {
                     throw error;
                 }
             }
-        }
+        };
+    }
 
+    for (const test of tests) {
+        const testCallback = createTestCallback(test);
         if (test.only) {
-            forced = true;
+            testRunState.forced = true;
             it.only(test.it, testCallback);
         } else if (test.skip) {
             it.skip(test.it, testCallback);
         } else {
             it(test.it, testCallback);
         }
-    });
+    }
 
-    if (forced) {
+    if (testRunState.forced) {
         it.only("forced tests should not remain in the code", () => {
-            if (allPassed) {
-                assert.strictEquals(
-                    forced,
-                    false,
-                    "Only tests are not allowed."
+            if (testRunState.allPassed) {
+                expect(testRunState.forced, "Only tests are not allowed.").toBe(
+                    false
                 );
             }
         });

@@ -1,26 +1,25 @@
 import type { Comment } from "estree";
 
-const ignoreTheseKeys = ["tokens"];
-const ignoreTheseChildTypes = ["string", "number"];
+import { arrayIncludes, objectEntries, objectHasIn } from "ts-extras";
 
 const commentTypes = [
-    "Line",
     "Block",
     "CommentBlock",
     "CommentLine",
+    "Line",
 ] as const;
 
-function isMaybeComment(input: any): input is Comment {
-    return !(
-        !input ||
-        typeof input !== "object" ||
-        !("type" in input) ||
-        !commentTypes.includes(input.type) ||
-        !("value" in input)
+function isMaybeComment(input: unknown): input is Comment {
+    return Boolean(
+        input &&
+        typeof input === "object" &&
+        objectHasIn(input, "type") &&
+        arrayIncludes(commentTypes, input.type) &&
+        objectHasIn(input, "value")
     );
 }
 
-export function extractComments(node: any): Comment[] {
+export function extractComments(node: unknown): Comment[] {
     if (!node || typeof node !== "object") {
         return [];
     }
@@ -30,15 +29,16 @@ export function extractComments(node: any): Comment[] {
         comments.push(...node.filter(isMaybeComment));
     }
 
-    Object.keys(node).forEach((nodeKey) => {
-        if (!ignoreTheseKeys.includes(nodeKey)) {
-            const nodeChild = node[nodeKey];
-            if (!ignoreTheseChildTypes.includes(typeof nodeChild)) {
-                comments.push(...extractComments(nodeChild));
-            }
+    for (const [nodeKey, nodeChild] of objectEntries(node)) {
+        if (nodeKey === "tokens") {
+            continue;
         }
-    });
 
-    // this might duplicate comments but our later code doesn't care
+        if (typeof nodeChild !== "number" && typeof nodeChild !== "string") {
+            comments.push(...extractComments(nodeChild));
+        }
+    }
+
+    // This might duplicate comments but our later code doesn't care
     return comments;
 }

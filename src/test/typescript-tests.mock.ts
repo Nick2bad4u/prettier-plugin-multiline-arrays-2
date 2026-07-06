@@ -1,3 +1,5 @@
+import type { MultilineArrayTest } from "./run-tests.mock.js";
+
 import { capitalizeFirst } from "../augments/string.js";
 import {
     nextLinePatternComment,
@@ -6,7 +8,6 @@ import {
     setLinePatternComment,
     setWrapThresholdComment,
 } from "../options.js";
-import { type MultilineArrayTest } from "./run-tests.mock.js";
 
 export const typescriptTests: MultilineArrayTest[] = [
     {
@@ -16,7 +17,7 @@ export const typescriptTests: MultilineArrayTest[] = [
                 inputObject: ObjectGeneric,
                 inputKey: KeyGeneric,
                 // @ts-ignore this type signature is actually exactly what I want
-            ): inputObject is ObjectGeneric extends Record<KeyGeneric, any>
+            ): inputObject is ObjectGeneric extends Record<KeyGeneric, unknown>
                 ? Extract<ObjectGeneric, {[SubProperty in KeyGeneric]: unknown}>
                 : Record<KeyGeneric, unknown> {
                 return inputKey in inputObject;
@@ -328,7 +329,7 @@ export const typescriptTests: MultilineArrayTest[] = [
             const thingieArray = ['hello'];
         `,
         options: {
-            multilineArraysWrapThreshold: "fifty two" as any,
+            multilineArraysWrapThreshold: "fifty two" as unknown as number,
         },
         failureMessage:
             'Invalid multilineArraysWrapThreshold value. Expected an integer, but received "fifty two".',
@@ -419,7 +420,7 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        // this was causing an error on the closing "}" at one point
+        // This was causing an error on the closing "}" at one point
         it: "interpolated string example",
         code: `
             if (children.length) {
@@ -917,7 +918,7 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
-        // caused a max call stack exceeded error once
+        // Caused a max call stack exceeded error once
         it: "single object element with multiline template",
         code: `
         
@@ -1489,7 +1490,7 @@ export const typescriptTests: MultilineArrayTest[] = [
             };
         `,
     },
-    // the following test caught that path.getValue() can return undefined.
+    // The following test caught that path.getValue() can return undefined.
     {
         it: "array with an earlier function definition",
         code: `

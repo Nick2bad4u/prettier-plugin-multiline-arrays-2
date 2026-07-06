@@ -1,2 +1,2 @@
-// used to find our own plugin
+// Used to find our own plugin
 export const pluginMarker = {};

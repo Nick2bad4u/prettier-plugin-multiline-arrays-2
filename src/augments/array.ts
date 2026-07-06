@@ -1,15 +1,25 @@
 import type { SourceLocation } from "estree";
 
-/** Both line and column in "range" are 0 indexed. */
+import { assertDefined } from "ts-extras";
+
+type SourceRange = Pick<SourceLocation, "end" | "start">;
+
+/**
+ * Both line and column in "range" are 0 indexed.
+ *
+ * @throws If the range starts after it ends.
+ */
 export function extractTextBetweenRanges(
     input: string[],
-    range: Omit<SourceLocation, "source">
+    range: SourceRange
 ): string {
     if (range.start.line > range.end.line) {
         throw new Error(
             `Start line "${range.start.line}" cannot be greater than end line "${range.end.line}"`
         );
-    } else if (range.start.line === range.end.line) {
+    }
+
+    if (range.start.line === range.end.line) {
         if (range.start.column >= range.end.column) {
             throw new Error(
                 `When start and end are on the same line, the start column "${range.start.column}" must be less than the end column "${range.end.column}".`
@@ -31,10 +41,12 @@ export function extractTextBetweenRanges(
     for (
         let lineIndex = range.start.line + 1;
         lineIndex < range.end.line;
-        lineIndex++
+        lineIndex += 1
     ) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        extractedText += input[lineIndex]!;
+        const inputLine = input[lineIndex];
+        assertDefined(inputLine);
+
+        extractedText += inputLine;
         extractedText += "\n";
     }
 

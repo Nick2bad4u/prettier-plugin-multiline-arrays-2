@@ -1,8 +1,6 @@
 # prettier-plugin-multiline-arrays-2
 
-[![npm](https://img.shields.io/npm/v/prettier-plugin-multiline-arrays-2.svg)](https://www.npmjs.com/package/prettier-plugin-multiline-arrays-2)
-[![CI](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/actions/workflows/ci.yml/badge.svg)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/actions/workflows/ci.yml)
-[![License: MIT OR CC0-1.0](https://img.shields.io/badge/license-MIT%20OR%20CC0--1.0-blue.svg)](LICENSE-MIT)
+[![NPM license.](https://flat.badgen.net/npm/license/prettier-plugin-multiline-arrays-2?color=purple)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/blob/main/LICENSE) [![NPM total downloads.](https://flat.badgen.net/npm/dt/prettier-plugin-multiline-arrays-2?color=pink)](https://www.npmjs.com/package/prettier-plugin-multiline-arrays-2) [![Latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=cyan)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=yellow)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=orange)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=red)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/issues) [![Codecov.](https://flat.badgen.net/codecov/github/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=blue)](https://codecov.io/gh/Nick2bad4u/prettier-plugin-multiline-arrays-2) [![Repo Checks.](https://flat.badgen.net/github/checks/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=green)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/actions)
 
 Prettier plugin to force array elements to wrap onto new lines, even when there is only one element. It supports TypeScript, JavaScript, JSON, and JSON5, with options for wrap thresholds and per-line element patterns.
 
@@ -27,7 +25,7 @@ When combining this plugin with parser/preprocessor plugins such as `prettier-pl
 ## Options
 
 - `multilineArraysWrapThreshold`: number. Arrays with more elements than this value are forced to wrap. The default is `-1`, which disables automatic threshold wrapping.
-- `multilineArraysLinePattern`: string. Space- or comma-separated list of numbers controlling how many elements appear on each line. The pattern repeats for longer arrays. The default is `"1"`.
+- `multilineArraysLinePattern`: string. Space- or comma-separated list of numbers controlling the element count per line. The pattern repeats for longer arrays. The default is `"1"`.
 
 Example:
 

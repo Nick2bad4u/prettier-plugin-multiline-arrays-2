@@ -1,7 +1,9 @@
-import { stringify } from "@augment-vir/common";
 import type { Doc, doc } from "prettier";
 
-type NestedStringArray = (string | NestedStringArray)[];
+import { stringify } from "@augment-vir/common";
+import { objectHasIn } from "ts-extras";
+
+type NestedStringArray = (NestedStringArray | string)[];
 
 const childProperties = [
     "breakContents",
@@ -16,22 +18,26 @@ export function stringifyDoc(
 ): NestedStringArray {
     if (typeof input === "string" || !input) {
         return [stringify(input)];
-    } else if (Array.isArray(input)) {
+    }
+
+    if (Array.isArray(input)) {
         return input.map((entry) => stringifyDoc(entry, recursive));
-    } else if (recursive) {
-        const children = childProperties.reduce(
-            (accum: NestedStringArray, currentProperty) => {
-                if (currentProperty in input) {
-                    accum.push(
-                        `${currentProperty}:`,
-                        stringifyDoc((input as any)[currentProperty], recursive)
-                    );
-                }
-                return accum;
-            },
-            []
-        );
-        if (children.length) {
+    }
+
+    if (recursive) {
+        const children: NestedStringArray = [];
+        for (const currentProperty of childProperties) {
+            if (objectHasIn(input, currentProperty)) {
+                children.push(
+                    `${currentProperty}:`,
+                    stringifyDoc(
+                        input[currentProperty] as Doc | null | undefined,
+                        recursive
+                    )
+                );
+            }
+        }
+        if (children.length > 0) {
             return [`${input.type}:`, stringifyDoc(children, recursive)];
         }
     }
@@ -40,9 +46,11 @@ export function stringifyDoc(
 }
 
 export function isDocCommand(
-    inputDoc: Doc | undefined | null
+    inputDoc: Doc | null | undefined
 ): inputDoc is doc.builders.DocCommand {
     return (
-        !!inputDoc && typeof inputDoc !== "string" && !Array.isArray(inputDoc)
+        Boolean(inputDoc) &&
+        typeof inputDoc !== "string" &&
+        !Array.isArray(inputDoc)
     );
 }

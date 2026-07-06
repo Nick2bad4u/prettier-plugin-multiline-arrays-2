@@ -1,5 +1,7 @@
 # Code of Conduct
 
-Be respectful, constructive, and focused on improving the project. Harassment, abusive language, and bad-faith participation are not acceptable.
+Be respectful, constructive, and inclusive when participating in this project.
 
-Report conduct concerns through the repository security or support channels.
+Unacceptable behavior includes harassment, abuse, discriminatory language, or sharing private information without permission.
+
+Report concerns to <20943337+Nick2bad4u@users.noreply.github.com>.
