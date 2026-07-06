@@ -31,6 +31,24 @@ describe("optionPropertyValidators", () => {
             expect: false,
         },
         {
+            title: "allows -1 for multilineTypeUnionsWrapThreshold",
+            optionType: "multilineTypeUnionsWrapThreshold",
+            input: -1,
+            expect: true,
+        },
+        {
+            title: "allows numbers for multilineTypeUnionsWrapThreshold",
+            optionType: "multilineTypeUnionsWrapThreshold",
+            input: 4,
+            expect: true,
+        },
+        {
+            title: "rejects strings for multilineTypeUnionsWrapThreshold",
+            optionType: "multilineTypeUnionsWrapThreshold",
+            input: "4",
+            expect: false,
+        },
+        {
             title: "allows numeric strings for multilineArraysLinePattern",
             optionType: "multilineArraysLinePattern",
             input: "63",

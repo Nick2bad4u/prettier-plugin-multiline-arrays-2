@@ -60,6 +60,19 @@ which disables automatic threshold wrapping.
 The pattern repeats for longer arrays. This option overrides threshold wrapping
 and Prettier's normal column-based array wrapping.
 
+`multilineTypeUnionsWrapThreshold` controls when TypeScript union types are
+forced onto multiple lines with one member per line:
+
+```json
+{
+ "multilineTypeUnionsWrapThreshold": 2
+}
+```
+
+With this value, union types with more than two members wrap. The default is
+`-1`, which disables union wrapping and leaves Prettier's default union
+formatting in place.
+
 ## Comment Overrides
 
 Use a next-line threshold comment to affect only the next array:
@@ -84,3 +97,6 @@ The line-pattern comments follow the same next/set/reset model:
 // prettier-multiline-arrays-next-line-pattern: 2 1
 const values = ["a", "b", "c", "d", "e"];
 ```
+
+Comment overrides only apply to arrays. TypeScript union wrapping is controlled
+by `multilineTypeUnionsWrapThreshold`.

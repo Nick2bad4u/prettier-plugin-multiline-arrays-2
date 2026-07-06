@@ -1569,6 +1569,64 @@ export const typescriptTests: MultilineArrayTest[] = [
         `,
     },
     {
+        it: "leaves TypeScript unions on one line by default",
+        code: `
+            type ArgumentTemplateId =
+                | "empty"
+                | "identifier"
+                | "literal"
+                | "multiple"
+                | "spread";
+        `,
+        expect: `
+            type ArgumentTemplateId = 'empty' | 'identifier' | 'literal' | 'multiple' | 'spread';
+        `,
+    },
+    {
+        it: "wraps TypeScript unions above the configured threshold",
+        code: `
+            type ArgumentTemplateId = "empty" | "identifier" | "literal" | "multiple" | "spread";
+        `,
+        expect: `
+            type ArgumentTemplateId =
+                | 'empty'
+                | 'identifier'
+                | 'literal'
+                | 'multiple'
+                | 'spread';
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "does not wrap TypeScript unions at the configured threshold",
+        code: `
+            type MaybeName = string | undefined;
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions inside generic type arguments without forcing arrays",
+        code: `
+            const values: Array<"empty" | "identifier" | "literal" | "multiple"> = ["empty", "identifier"];
+        `,
+        expect: `
+            const values: Array<
+                | 'empty'
+                | 'identifier'
+                | 'literal'
+                | 'multiple'
+            > = ['empty', 'identifier'];
+        `,
+        options: {
+            multilineArraysWrapThreshold: 10,
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
         it: "formats a real-world route table with comments, callbacks, tuples, and nested metadata",
         code: `
             import {unused} from 'unused';

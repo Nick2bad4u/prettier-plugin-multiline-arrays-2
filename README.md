@@ -2,7 +2,7 @@
 
 [![NPM license.](https://flat.badgen.net/npm/license/prettier-plugin-multiline-arrays-2?color=purple)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/blob/main/LICENSE) [![NPM total downloads.](https://flat.badgen.net/npm/dt/prettier-plugin-multiline-arrays-2?color=pink)](https://www.npmjs.com/package/prettier-plugin-multiline-arrays-2) [![Latest GitHub release.](https://flat.badgen.net/github/release/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=cyan)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/releases) [![GitHub stars.](https://flat.badgen.net/github/stars/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=yellow)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/stargazers) [![GitHub forks.](https://flat.badgen.net/github/forks/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=orange)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/forks) [![GitHub open issues.](https://flat.badgen.net/github/open-issues/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=red)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/issues) [![Codecov.](https://flat.badgen.net/codecov/github/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=blue)](https://codecov.io/gh/Nick2bad4u/prettier-plugin-multiline-arrays-2) [![Repo Checks.](https://flat.badgen.net/github/checks/Nick2bad4u/prettier-plugin-multiline-arrays-2?color=green)](https://github.com/Nick2bad4u/prettier-plugin-multiline-arrays-2/actions)
 
-Prettier plugin to force array elements to wrap onto new lines, even when there is only one element. It supports TypeScript, JavaScript, JSON, and JSON5, with options for wrap thresholds and per-line element patterns.
+Prettier plugin to force array elements to wrap onto new lines, even when there is only one element. It supports TypeScript, JavaScript, JSON, and JSON5, with options for array wrap thresholds, per-line element patterns, and opt-in TypeScript union wrapping.
 
 > [!NOTE]
 > This is a maintained fork of [electrovir/prettier-plugin-multiline-arrays](https://github.com/electrovir/prettier-plugin-multiline-arrays). Credit to the original plugin for the core idea and implementation.
@@ -27,13 +27,15 @@ When combining this plugin with parser/preprocessor plugins such as `prettier-pl
 
 - `multilineArraysWrapThreshold`: number. Arrays with more elements than this value are forced to wrap. The default is `-1`, which disables automatic threshold wrapping.
 - `multilineArraysLinePattern`: string. Space- or comma-separated list of numbers controlling the element count per line. The pattern repeats for longer arrays. The default is `"1"`.
+- `multilineTypeUnionsWrapThreshold`: number. TypeScript union types with more members than this value are forced to wrap with one member per line. The default is `-1`, which disables union wrapping.
 
 Example:
 
 ```json
 {
  "multilineArraysWrapThreshold": 3,
- "multilineArraysLinePattern": "2 1"
+ "multilineArraysLinePattern": "2 1",
+ "multilineTypeUnionsWrapThreshold": 2
 }
 ```
 
@@ -57,6 +59,9 @@ Use `set` comments to affect later arrays in a file:
 ```
 
 Use `prettier-multiline-arrays-reset` to return to the configured defaults.
+
+Comment overrides only apply to array formatting. TypeScript union wrapping is
+controlled by `multilineTypeUnionsWrapThreshold`.
 
 ## Precedence
 

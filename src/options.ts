@@ -40,11 +40,21 @@ export interface MultilineArrayOptions {
      * Set to 2 to only wrap if there are more than 2 element. Etc.
      */
     multilineArraysWrapThreshold: number;
+    /**
+     * If there are MORE members in a TypeScript union type than this, the union
+     * will be forced to wrap with one member per line.
+     *
+     * This defaults to -1, indicating that no special wrapping enforcement will
+     * take place.
+     */
+    multilineTypeUnionsWrapThreshold: number;
 }
 
 export const optionHelp: Record<keyof MultilineArrayOptions, string> = {
     multilineArraysWrapThreshold: `A number indicating that all arrays should wrap when they have MORE than the specified number. Defaults to -1, indicating that no special wrapping enforcement will take place.\nExample: multilineArraysWrapThreshold: 3\nCan be overridden with a comment starting with ${nextWrapThresholdComment}.\nComment example: // ${nextWrapThresholdComment} 5`,
     multilineArraysLinePattern: `A string with a space separated list of numbers indicating how many elements should be on each line. The pattern repeats if an array is longer than the pattern. Defaults to an empty string. Any invalid numbers causes the whole pattern to revert to the default. This overrides the wrap threshold option.\nExample: elementsPerLinePattern: "3 2 1"\nCan be overridden with a comment starting with ${nextLinePatternComment}.\nComment example: // ${nextLinePatternComment} 3 2 1\nThis option overrides Prettier's default wrapping; multiple elements on one line will not be wrapped even if they don't fit within the column count.`,
+    multilineTypeUnionsWrapThreshold:
+        "A number indicating that TypeScript union types should wrap when they have MORE than the specified number of members. Defaults to -1, indicating that no special wrapping enforcement will take place.",
 };
 
 export const optionPropertyValidators: {
@@ -53,6 +63,8 @@ export const optionPropertyValidators: {
     ) => input is MultilineArrayOptions[Property];
 } = {
     multilineArraysWrapThreshold: (input): input is number =>
+        typeof input === "number" && !Number.isNaN(input),
+    multilineTypeUnionsWrapThreshold: (input): input is number =>
         typeof input === "number" && !Number.isNaN(input),
     multilineArraysLinePattern(input): input is string {
         if (typeof input !== "string") {
@@ -71,6 +83,7 @@ export const optionPropertyValidators: {
 export const defaultMultilineArrayOptions: MultilineArrayOptions = {
     multilineArraysWrapThreshold: -1,
     multilineArraysLinePattern: "",
+    multilineTypeUnionsWrapThreshold: -1,
 };
 
 const optionTypeToPrettierOptionTypeMapping: Record<

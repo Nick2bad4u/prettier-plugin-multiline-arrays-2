@@ -11,6 +11,7 @@ import {
     type MultilineArrayOptions,
 } from "../options.js";
 import { printWithMultilineArrays } from "./insert-new-lines.js";
+import { printWithMultilineTypeUnions } from "./multiline-type-union.js";
 
 /**
  * The estree plugin is bundled with Prettier and exposes the base printers we
@@ -75,6 +76,16 @@ export function createMultilineArrayPrinter(
 
             const multilineOptions: MultilineArrayOptions & ParserOptions =
                 fillInOptions(options);
+
+            const multilineTypeUnionOutput = printWithMultilineTypeUnions({
+                path,
+                print,
+                inputOptions: multilineOptions,
+            });
+
+            if (multilineTypeUnionOutput) {
+                return multilineTypeUnionOutput;
+            }
 
             return printWithMultilineArrays({
                 originalFormattedOutput: originalOutput,
