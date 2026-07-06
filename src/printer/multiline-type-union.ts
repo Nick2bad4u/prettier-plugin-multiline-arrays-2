@@ -14,6 +14,10 @@ interface TypeScriptUnionNode {
     types: unknown[];
 }
 
+interface TypeScriptArrayNode {
+    type: "TSArrayType";
+}
+
 function isTypeScriptUnionNode(input: unknown): input is TypeScriptUnionNode {
     if (!input || typeof input !== "object") {
         return false;
@@ -28,6 +32,14 @@ function isTypeScriptUnionNode(input: unknown): input is TypeScriptUnionNode {
         possibleUnionNode.type === "TSUnionType" &&
         Array.isArray(possibleUnionNode.types)
     );
+}
+
+function isTypeScriptArrayNode(input: unknown): input is TypeScriptArrayNode {
+    if (!input || typeof input !== "object") {
+        return false;
+    }
+
+    return safeCastTo<{ type?: unknown }>(input).type === "TSArrayType";
 }
 
 export function printWithMultilineTypeUnions({
@@ -56,8 +68,22 @@ export function printWithMultilineTypeUnions({
 
     const printedTypes = node.types.map((_, index) => print(["types", index]));
     const unionMembers = printedTypes.map((typeDoc) => ["| ", typeDoc]);
-
-    return prettier.doc.builders.group(
-        prettier.doc.builders.join(prettier.doc.builders.hardline, unionMembers)
+    const unionDoc = prettier.doc.builders.join(
+        prettier.doc.builders.hardline,
+        unionMembers
     );
+
+    if (isTypeScriptArrayNode(path.getParentNode())) {
+        return prettier.doc.builders.group([
+            "(",
+            prettier.doc.builders.indent([
+                prettier.doc.builders.hardline,
+                unionDoc,
+            ]),
+            prettier.doc.builders.hardline,
+            ")",
+        ]);
+    }
+
+    return prettier.doc.builders.group(unionDoc);
 }

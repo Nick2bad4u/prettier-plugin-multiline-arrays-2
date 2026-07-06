@@ -1627,6 +1627,22 @@ export const typescriptTests: MultilineArrayTest[] = [
         },
     },
     {
+        it: "wraps TypeScript unions inside readonly array types with required parentheses",
+        code: `
+            declare const nullableMonitors: readonly (null | undefined | { readonly id: string })[];
+        `,
+        expect: `
+            declare const nullableMonitors: readonly (
+                | null
+                | undefined
+                | {readonly id: string}
+            )[];
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
         it: "formats a real-world route table with comments, callbacks, tuples, and nested metadata",
         code: `
             import {unused} from 'unused';
