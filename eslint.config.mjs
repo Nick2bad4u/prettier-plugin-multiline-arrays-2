@@ -131,6 +131,11 @@ const config = [
         rules: turnOffRules(["complexity"]),
     },
     {
+        files: [".gitleaks.toml", "cliff.toml"],
+        name: "Prettier doc mutation complexity",
+        rules: turnOffRules(["tombi/tombi"]),
+    },
+    {
         files: prettierAstBoundaryFiles,
         name: "Prettier AST and doc type boundaries",
         rules: turnOffRules([
