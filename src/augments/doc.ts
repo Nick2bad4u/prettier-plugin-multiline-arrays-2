@@ -13,9 +13,10 @@ const childProperties = [
 ] as const;
 
 export function stringifyDoc(
-    input: | Doc
-    | null
-    | undefined,
+    input:
+        | Doc
+        | null
+        | undefined,
     recursive = false
 ): NestedStringArray {
     if (typeof input === "string" || !input) {
@@ -33,9 +34,10 @@ export function stringifyDoc(
                 children.push(
                     `${currentProperty}:`,
                     stringifyDoc(
-                        input[currentProperty] as | Doc
-                        | null
-                        | undefined,
+                        input[currentProperty] as
+                            | Doc
+                            | null
+                            | undefined,
                         recursive
                     )
                 );
@@ -50,9 +52,10 @@ export function stringifyDoc(
 }
 
 export function isDocCommand(
-    inputDoc: | Doc
-    | null
-    | undefined
+    inputDoc:
+        | Doc
+        | null
+        | undefined
 ): inputDoc is doc.builders.DocCommand {
     return (
         Boolean(inputDoc) &&
