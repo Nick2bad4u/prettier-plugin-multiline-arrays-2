@@ -1600,6 +1600,226 @@ export const typescriptTests: MultilineArrayTest[] = [
         },
     },
     {
+        it: "wraps TypeScript unions after as assertions on a new indented line",
+        code: `
+            const separatorKey = \`\${Number(hasStartColon)}\${Number(hasEndColon)}\` as "00" | "01" | "10" | "11";
+        `,
+        expect: `
+            const separatorKey = \`\${Number(hasStartColon)}\${Number(hasEndColon)}\` as
+                | '00'
+                | '01'
+                | '10'
+                | '11';
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions after satisfies expressions on a new indented line",
+        code: `
+            const config = {mode: "strict"} satisfies {readonly mode: "strict"} | {readonly mode: "loose"} | {readonly mode: "off"};
+        `,
+        expect: `
+            const config = {mode: 'strict'} satisfies
+                | {readonly mode: 'strict'}
+                | {readonly mode: 'loose'}
+                | {readonly mode: 'off'};
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions after parameter type annotations on a new indented line",
+        code: `
+            const buildSource = (sourceKind: "intersection" | "stringLiteral" | "templateLiteral"): string => sourceKind;
+        `,
+        expect: `
+            const buildSource = (
+                sourceKind:
+                    | 'intersection'
+                    | 'stringLiteral'
+                    | 'templateLiteral',
+            ): string => sourceKind;
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions after property type annotations on a new indented line",
+        code: `
+            interface SourceOptions {
+                readonly sourceKind: "intersection" | "stringLiteral" | "templateLiteral";
+            }
+        `,
+        expect: `
+            interface SourceOptions {
+                readonly sourceKind:
+                    | 'intersection'
+                    | 'stringLiteral'
+                    | 'templateLiteral';
+            }
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions after type parameter constraints on a new indented line",
+        code: `
+            type ExtractSource<SourceKind extends "intersection" | "stringLiteral" | "templateLiteral"> = SourceKind;
+        `,
+        expect: `
+            type ExtractSource<
+                SourceKind extends
+                    | 'intersection'
+                    | 'stringLiteral'
+                    | 'templateLiteral',
+            > = SourceKind;
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions in conditional type extends clauses on a new indented line",
+        code: `
+            type IsPrimitive<Value> = Value extends string | number | boolean ? true : false;
+        `,
+        expect: `
+            type IsPrimitive<Value> = Value extends
+                | string
+                | number
+                | boolean
+                ? true
+                : false;
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "parenthesizes wrapped TypeScript unions in conditional type check clauses",
+        code: `
+            type AcceptsPrimitive<Value> = string | number | boolean extends Value ? true : false;
+        `,
+        expect: `
+            type AcceptsPrimitive<Value> = (
+                | string
+                | number
+                | boolean
+            ) extends Value
+                ? true
+                : false;
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions inside indexed access index types",
+        code: `
+            type PickSource<T> = T["intersection" | "stringLiteral" | "templateLiteral"];
+        `,
+        expect: `
+            type PickSource<T> = T[
+                | 'intersection'
+                | 'stringLiteral'
+                | 'templateLiteral'
+            ];
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "parenthesizes wrapped TypeScript unions inside indexed access object types",
+        code: `
+            type SourceValue = ({readonly intersection: 1} | {readonly stringLiteral: 2} | {readonly templateLiteral: 3})["intersection"];
+        `,
+        expect: `
+            type SourceValue = (
+                | {readonly intersection: 1}
+                | {readonly stringLiteral: 2}
+                | {readonly templateLiteral: 3}
+            )['intersection'];
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "parenthesizes wrapped TypeScript unions after type operators",
+        code: `
+            type SourceKeys = keyof ({readonly intersection: 1} | {readonly stringLiteral: 2} | {readonly templateLiteral: 3});
+        `,
+        expect: `
+            type SourceKeys = keyof (
+                | {readonly intersection: 1}
+                | {readonly stringLiteral: 2}
+                | {readonly templateLiteral: 3}
+            );
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions after type predicates on a new indented line",
+        code: `
+            function isSource(input: unknown): input is "intersection" | "stringLiteral" | "templateLiteral" {
+                return true;
+            }
+        `,
+        expect: `
+            function isSource(input: unknown): input is
+                | 'intersection'
+                | 'stringLiteral'
+                | 'templateLiteral' {
+                return true;
+            }
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions after mapped type key constraints on a new indented line",
+        code: `
+            type SourceMap = {[SourceKind in "intersection" | "stringLiteral" | "templateLiteral"]: SourceKind};
+        `,
+        expect: `
+            type SourceMap = {
+                [
+                    SourceKind in
+                        | 'intersection'
+                        | 'stringLiteral'
+                        | 'templateLiteral'
+                ]: SourceKind;
+            };
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
+        it: "wraps TypeScript unions after function return type annotations on a new indented line",
+        code: `
+            const getConfig = (): readonly string[] | string | undefined => undefined;
+        `,
+        expect: `
+            const getConfig = ():
+                | readonly string[]
+                | string
+                | undefined => undefined;
+        `,
+        options: {
+            multilineTypeUnionsWrapThreshold: 2,
+        },
+    },
+    {
         it: "does not wrap TypeScript unions at the configured threshold",
         code: `
             type MaybeName = string | undefined;
