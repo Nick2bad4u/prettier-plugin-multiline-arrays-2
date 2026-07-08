@@ -12,3 +12,5 @@ generated-config-*
 graphics/
 node_modules/
 tsconfig.tsbuildinfo
+.lychee.report.md
+.lycheecache
