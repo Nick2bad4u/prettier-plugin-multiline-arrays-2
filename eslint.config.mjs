@@ -43,6 +43,10 @@ const config = [
         ],
     }),
     {
+        name: "Existing npm release workflow",
+        rules: turnOffRules(["repo-compliance/require-release-config-file"]),
+    },
+    {
         files: [
             "actionlint.yaml",
             ".github/labeler.yml",

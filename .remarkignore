@@ -55,10 +55,11 @@ docs/docusaurus/node_modules/
 
 # Non-prose instruction and GitHub template files
 **/AGENTS.md
+**/agent-commit-message-instructions.md
+.github/agent-commit-message-instructions.md
 .github/ISSUE_TEMPLATE/**/*.md
 .github/PULL_REQUEST_TEMPLATE/**/*.md
 
 # Docusaurus API reference files (if auto-generated)
 **/site-docs/developer/api/
 test/fixtures/
-
