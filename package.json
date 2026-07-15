@@ -55,15 +55,15 @@
         "lint": "npx eslint . --cache --cache-strategy content --cache-location .cache/.eslintcache",
         "lint:fix": "npx eslint . --cache --cache-strategy content --cache-location .cache/.eslintcache --fix",
         "lint:gitleaks": "gitleaks dir --config .gitleaks.toml .",
-        "lint:jscpd": "jscpd --config node_modules/jscpd-config-nick2bad4u/jscpd.json",
+        "lint:jscpd": "npx jscpd --config node_modules/jscpd-config-nick2bad4u/jscpd.json",
         "lint:lychee": "lychee --config node_modules/lychee-config-nick2bad4u/lychee.toml .",
         "lint:lychee:smoke": "lychee --config node_modules/lychee-config-nick2bad4u/lychee.toml --dump-inputs README.md",
         "lint:package": "npx publint",
-        "lint:package-json": "npmPkgJsonLint . --config .npmpackagejsonlintrc.json",
+        "lint:package-json": "npx npmPkgJsonLint . --config .npmpackagejsonlintrc.json",
         "lint:prettier": "npx prettier . --log-level warn --cache --cache-location=.cache/.prettier-cache --cache-strategy=content --check",
         "lint:prettier:fix": "npx prettier . --log-level warn --cache --cache-location=.cache/.prettier-cache --cache-strategy=content --write",
-        "lint:remark": "remark . --frail --ignore-path .remarkignore",
-        "lint:remark:fix": "remark . --ignore-path .remarkignore --output",
+        "lint:remark": "npx remark . --frail --ignore-path .remarkignore",
+        "lint:remark:fix": "npx remark . --ignore-path .remarkignore --output",
         "lint:yamllint": "yamllint -c .yamllint .",
         "prepack": "npm run build",
         "release:check": "npm run release:verify && npm pack --dry-run",
@@ -80,7 +80,7 @@
         "typecheck": "npx tsc -p tsconfig.json --noEmit",
         "update-actions": "npx actions-up --yes --style sha --quiet",
         "update-all": "npm run update-actions && npm run update-deps",
-        "update-deps": "ncu --configFileName .ncurc.json --configFilePath node_modules/ncu-config-nick2bad4u && npm update --force && npm install --force && npm run sync:peer-prettier-range && npm run sync:node-version-files"
+        "update-deps": "npx ncu --configFileName .ncurc.json --configFilePath node_modules/ncu-config-nick2bad4u && npm update --force && npm install --force && npm run sync:peer-prettier-range && npm run sync:node-version-files"
     },
     "dependencies": {
         "@augment-vir/assert": "^32.1.0",
