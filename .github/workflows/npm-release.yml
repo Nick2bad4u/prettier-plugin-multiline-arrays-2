@@ -280,7 +280,34 @@ jobs:
 
                   tarball_filename="$(
                     node \
-                      -e "const fs = require('node:fs'); const data = JSON.parse(fs.readFileSync(process.argv[1], 'utf8')); process.stdout.write(data[0].filename);" \
+                      -e '
+                        const fs = require("node:fs");
+                        const data = JSON.parse(
+                          fs.readFileSync(process.argv[1], "utf8")
+                        );
+                        const records = Array.isArray(data)
+                          ? data
+                          : Object.values(data);
+                        if (records.length !== 1) {
+                          throw new Error(
+                            "Expected exactly one npm pack record, received " +
+                              records.length +
+                              "."
+                          );
+                        }
+                        const [record] = records;
+                        if (
+                          !record ||
+                          typeof record !== "object" ||
+                          typeof record.filename !== "string" ||
+                          record.filename.trim() === ""
+                        ) {
+                          throw new TypeError(
+                            "Expected npm pack metadata to contain a non-empty filename."
+                          );
+                        }
+                        process.stdout.write(record.filename);
+                      ' \
                       "$pack_metadata_path"
                   )"
                   tarball_path="${assets_dir}/${tarball_filename}"
