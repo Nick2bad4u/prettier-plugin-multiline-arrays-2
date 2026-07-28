@@ -109,19 +109,17 @@ describe(walkDoc, () => {
     });
 
     it("treats empty docs as a successful no-op walk", () => {
-        expect.assertions(1);
+        expect.assertions(2);
 
-        const visited: unknown[] = [];
+        const visitDoc = vi.fn<(currentDoc: Doc) => boolean>(() => true);
 
         expect(
             walkDoc({
                 startDoc: "",
                 debug: false,
-                callback: (currentDoc) => {
-                    visited.push(currentDoc);
-                    return true;
-                },
+                callback: visitDoc,
             })
         ).toBe(true);
+        expect(visitDoc).not.toHaveBeenCalled();
     });
 });

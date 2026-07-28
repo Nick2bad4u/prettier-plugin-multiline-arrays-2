@@ -94,11 +94,11 @@ export function printWithMultilineTypeUnions({
     inputOptions: MultilineArrayOptions & ParserOptions;
     path: AstPath<Node>;
     print: PrinterPrintCallback;
-}>): Doc | undefined {
+}>): { matched: false } | { matched: true; output: Doc } {
     const node: unknown = path.getNode();
 
     if (!isTypeScriptUnionNode(node)) {
-        return undefined;
+        return { matched: false };
     }
 
     const wrapThreshold =
@@ -107,7 +107,7 @@ export function printWithMultilineTypeUnions({
             : inputOptions.multilineTypeUnionsWrapThreshold;
 
     if (node.types.length <= wrapThreshold) {
-        return undefined;
+        return { matched: false };
     }
 
     const printedTypes = node.types.map((_, index) => print(["types", index]));
@@ -120,32 +120,52 @@ export function printWithMultilineTypeUnions({
     const parentNodeType = getNodeType(parentNode);
 
     if (isTypeScriptArrayNode(parentNode)) {
-        return buildParenthesizedUnionDoc(unionDoc);
+        return {
+            matched: true,
+            output: buildParenthesizedUnionDoc(unionDoc),
+        };
     }
 
     const pathKey = path.key;
 
     if (parentNodeType === "TSIndexedAccessType") {
         if (pathKey === "indexType") {
-            return prettier.doc.builders.group([
-                buildIndentedUnionDoc(unionDoc),
-                prettier.doc.builders.hardline,
-            ]);
+            return {
+                matched: true,
+                output: prettier.doc.builders.group([
+                    buildIndentedUnionDoc(unionDoc),
+                    prettier.doc.builders.hardline,
+                ]),
+            };
         }
 
-        return buildParenthesizedUnionDoc(unionDoc);
+        return {
+            matched: true,
+            output: buildParenthesizedUnionDoc(unionDoc),
+        };
     }
 
     if (
         parentNodeType === "TSTypeOperator" ||
         (parentNodeType === "TSConditionalType" && pathKey === "checkType")
     ) {
-        return buildParenthesizedUnionDoc(unionDoc);
+        return {
+            matched: true,
+            output: buildParenthesizedUnionDoc(unionDoc),
+        };
     }
 
     if (isTypeScriptUnionLeadingLineParent(parentNode)) {
-        return prettier.doc.builders.group(buildIndentedUnionDoc(unionDoc));
+        return {
+            matched: true,
+            output: prettier.doc.builders.group(
+                buildIndentedUnionDoc(unionDoc)
+            ),
+        };
     }
 
-    return prettier.doc.builders.group(unionDoc);
+    return {
+        matched: true,
+        output: prettier.doc.builders.group(unionDoc),
+    };
 }

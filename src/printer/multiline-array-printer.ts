@@ -77,14 +77,14 @@ export function createMultilineArrayPrinter(
             const multilineOptions: MultilineArrayOptions & ParserOptions =
                 fillInOptions(options);
 
-            const multilineTypeUnionOutput = printWithMultilineTypeUnions({
+            const multilineTypeUnionResult = printWithMultilineTypeUnions({
                 path,
                 print,
                 inputOptions: multilineOptions,
             });
 
-            if (multilineTypeUnionOutput) {
-                return multilineTypeUnionOutput;
+            if (multilineTypeUnionResult.matched) {
+                return multilineTypeUnionResult.output;
             }
 
             return printWithMultilineArrays({

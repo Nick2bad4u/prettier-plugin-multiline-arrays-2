@@ -8,6 +8,7 @@ import {
     arrayFirst,
     arrayIncludes,
     arrayJoin,
+    assert,
     assertDefined,
     isEmpty,
     objectHasIn,
@@ -323,11 +324,10 @@ export function insertLinesIntoArray({
                                 );
                             }
                             finalLineBreak.exists = true;
-                            if (!innerCurrentParentDoc) {
-                                throw new Error(
-                                    "Found if-break without a parent"
-                                );
-                            }
+                            assert(
+                                innerCurrentParentDoc,
+                                "Found if-break without a parent"
+                            );
 
                             if (!Array.isArray(innerCurrentParentDoc)) {
                                 throw new TypeError(
@@ -548,9 +548,8 @@ export function insertLinesIntoArray({
                                     currentLineCount !== 0;
                                 arrayChildCount += 1;
                                 if (
-                                    (hasCurrentLineCount &&
-                                        columnCount === currentLineCount) ||
-                                    !hasCurrentLineCount
+                                    !hasCurrentLineCount ||
+                                    columnCount === currentLineCount
                                 ) {
                                     // If we're on the last element of the line then increment to the next line
                                     lineIndex += 1;
@@ -689,9 +688,9 @@ export function insertLinesIntoArray({
                 }
 
                 if (
+                    !manualWrap &&
                     arrayChildCount < wrapThreshold &&
-                    isEmpty(lineCounts) &&
-                    !manualWrap
+                    isEmpty(lineCounts)
                 ) {
                     undoAllMutations();
                 }

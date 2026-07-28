@@ -1,5 +1,7 @@
 import type { Printer } from "prettier";
 
+import { assert } from "ts-extras";
+
 const originalPrinterState: {
     value: Printer | undefined;
 } = {
@@ -11,8 +13,9 @@ export function setOriginalPrinter(input: Printer): void {
 }
 
 export function getOriginalPrinter(): Printer {
-    if (!originalPrinterState.value) {
-        throw new Error("originalPrinter hasn't been defined yet!");
-    }
+    assert(
+        originalPrinterState.value,
+        "originalPrinter hasn't been defined yet!"
+    );
     return originalPrinterState.value;
 }

@@ -27,13 +27,73 @@ permissions: {}
 jobs:
     node-test-matrix:
         name: "Node.js matrix"
+        runs-on: "${{ matrix.os }}"
+        timeout-minutes: 60
         permissions:
             contents: "read"
             id-token: "write"
-        uses: >-
-            Nick2bad4u/workflow-templates/.github/workflows/reusable-node-test-matrix.yml@58ce16bfdbbf38d6c61ad95625791a058e3b525c
-        secrets:
+        strategy:
+            fail-fast: true
+            matrix:
+                include:
+                    - label: "linux"
+                      os: "ubuntu-latest"
+                      codecov_flag: "os-linux"
+                    - label: "windows"
+                      os: "windows-latest"
+                      codecov_flag: "os-windows"
+                    - label: "macos"
+                      os: "macos-latest"
+                      codecov_flag: "os-macos"
+        env:
+            CI: "true"
             CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
+        defaults:
+            run:
+                shell: "bash"
+        steps:
+            - name: "Harden runner (Ubuntu only)"
+              if: "${{ matrix.os == 'ubuntu-latest' }}"
+              uses: "step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920" # v2.20.0
+              with:
+                  egress-policy: "audit"
+
+            - name: "Checkout"
+              uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7.0.1
+
+            - name: "Setup Node"
+              uses: "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020" # v7.0.0
+              with:
+                  node-version-file: ".node-version"
+                  cache: "npm"
+                  cache-dependency-path: "package-lock.json"
+
+            - name: "Setup npm"
+              run: |
+                  npm install --global npm@12.0.1
+                  npm --version
+
+            - name: "Install dependencies"
+              run: "npm ci --force"
+
+            - name: "Build"
+              run: "npm run build --if-present"
+
+            - name: "Typecheck"
+              run: "npm run typecheck --if-present"
+
+            - name: "Run tests with coverage"
+              run: "npm test --if-present"
+
+            - name: "Upload coverage to Codecov"
+              if: "${{ !cancelled() && matrix.os == 'ubuntu-latest' && env.CODECOV_TOKEN != '' }}"
+              uses: "codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f" # v7.0.0
+              with:
+                  use_oidc: true
+                  slug: "${{ github.repository }}"
+                  flags: "${{ matrix.codecov_flag }}"
+                  name: "coverage-${{ matrix.codecov_flag }}"
+                  fail_ci_if_error: false
 
     release-verify:
         name: "Release verification"
@@ -56,6 +116,11 @@ jobs:
                   node-version-file: ".node-version"
                   cache: "npm"
                   cache-dependency-path: "package-lock.json"
+
+            - name: "Setup npm"
+              run: |
+                  npm install --global npm@12.0.1
+                  npm --version
 
             - name: "Install dependencies"
               run: "npm ci"

@@ -2,7 +2,7 @@ import type { Parser, ParserOptions, Plugin, Printer } from "prettier";
 
 import { stringify } from "@augment-vir/common";
 import { createWrappedMultiTargetProxy } from "proxy-vir";
-import { not, objectHasIn } from "ts-extras";
+import { assert, not, objectHasIn } from "ts-extras";
 
 import { pluginMarker } from "./plugin-marker.js";
 import { createMultilineArrayPrinter } from "./printer/multiline-array-printer.js";
@@ -50,18 +50,14 @@ async function runPreprocessSteps(
 function addMultilinePrinter(options: ActualParserOptions): void {
     if (objectHasIn(options, "printer")) {
         const originalPrinter = options.printer;
-        if (!originalPrinter) {
-            throw new Error("Could not find printer while adding printer.");
-        }
+        assert(originalPrinter, "Could not find printer while adding printer.");
 
         setOriginalPrinter(originalPrinter);
         /** Overwrite the printer with ours. */
         options.printer = createMultilineArrayPrinter(originalPrinter);
     } else {
         const astFormat = options.astFormat;
-        if (!astFormat) {
-            throw new Error("Could not find astFormat while adding printer.");
-        }
+        assert(astFormat, "Could not find astFormat while adding printer.");
         /**
          * If the printer hasn't already been assigned in options, rearrange
          * plugins so that ours gets chosen.
@@ -100,9 +96,7 @@ function addMultilinePrinter(options: ActualParserOptions): void {
             hasThisPluginMarker(plugin)
         );
         const thisPlugin = plugins[thisPluginIndex];
-        if (!thisPlugin) {
-            throw new Error("This plugin was not found.");
-        }
+        assert(thisPlugin, "This plugin was not found.");
 
         /**
          * Add this plugin to the beginning of the array so its printer is found

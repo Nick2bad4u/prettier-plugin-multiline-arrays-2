@@ -26,6 +26,31 @@ const prettierAstBoundaryFiles = [
 
 const fixtureTestFiles = ["docs/readme-examples/**/*.ts", "test/**/*.ts"];
 
+const sharedConfig = createConfig({
+    allowDefaultProjectFilePatterns: [
+        ...allowDefaultProjectFilePatternPresets.defaultRootFiles,
+        ...allowDefaultProjectFilePatternPresets.rootConfigFiles,
+    ],
+}).map((configEntry) => {
+    if (configEntry.rules?.["secretlint/secretlint"] === undefined) {
+        return configEntry;
+    }
+
+    return {
+        ...configEntry,
+        rules: {
+            ...configEntry.rules,
+            "secretlint/secretlint": [
+                "error",
+                {
+                    configFile:
+                        "node_modules/secretlint-config-nick2bad4u/.secretlintrc.json",
+                },
+            ],
+        },
+    };
+});
+
 /** @type {import("eslint").Linter.Config[]} */
 const config = [
     {
@@ -36,12 +61,7 @@ const config = [
             "node_modules",
         ],
     },
-    ...createConfig({
-        allowDefaultProjectFilePatterns: [
-            ...allowDefaultProjectFilePatternPresets.defaultRootFiles,
-            ...allowDefaultProjectFilePatternPresets.rootConfigFiles,
-        ],
-    }),
+    ...sharedConfig,
     {
         name: "Existing npm release workflow",
         rules: turnOffRules(["repo-compliance/require-release-config-file"]),
