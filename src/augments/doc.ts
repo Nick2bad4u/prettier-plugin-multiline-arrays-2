@@ -1,7 +1,8 @@
 import type { Doc, doc } from "prettier";
 
-import { stringify } from "@augment-vir/common";
 import { objectHasIn } from "ts-extras";
+
+import { stringify } from "./string.js";
 
 type NestedStringArray = (NestedStringArray | string)[];
 

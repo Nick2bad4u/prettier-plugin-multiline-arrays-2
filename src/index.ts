@@ -9,9 +9,9 @@ import type {
     SupportOption,
 } from "prettier";
 
-import { getObjectTypedKeys, mapObjectValues } from "@augment-vir/common";
 import { parsers as babelParsers } from "prettier/plugins/babel";
 import { parsers as tsParsers } from "prettier/plugins/typescript";
+import { objectKeys } from "ts-extras";
 
 import {
     defaultMultilineArrayOptions,
@@ -25,16 +25,13 @@ import { multilineArrayPrinter } from "./printer/multiline-array-printer.js";
 export * from "./options.js";
 export { pluginMarker } from "./plugin-marker.js";
 
-export const parsers: Record<string, Parser> = mapObjectValues(
-    {
-        typescript: tsParsers.typescript,
-        babel: babelParsers.babel,
-        "babel-ts": babelParsers["babel-ts"],
-        json: babelParsers.json,
-        json5: babelParsers.json5,
-    },
-    (languageName, parserEntry) => wrapParser(parserEntry, languageName)
-);
+export const parsers: Record<string, Parser> = {
+    typescript: wrapParser(tsParsers.typescript, "typescript"),
+    babel: wrapParser(babelParsers.babel, "babel"),
+    "babel-ts": wrapParser(babelParsers["babel-ts"], "babel-ts"),
+    json: wrapParser(babelParsers.json, "json"),
+    json5: wrapParser(babelParsers.json5, "json5"),
+};
 
 const printers: Record<string, Printer> = {
     estree: multilineArrayPrinter,
@@ -44,7 +41,7 @@ const printers: Record<string, Printer> = {
 function createOptions(): Record<keyof MultilineArrayOptions, SupportOption> {
     const output = {} as Record<keyof MultilineArrayOptions, SupportOption>;
 
-    for (const key of getObjectTypedKeys(defaultMultilineArrayOptions)) {
+    for (const key of objectKeys(defaultMultilineArrayOptions)) {
         const defaultValue = defaultMultilineArrayOptions[key];
         let supportOption: SupportOption;
 

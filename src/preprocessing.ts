@@ -1,9 +1,8 @@
 import type { Parser, ParserOptions, Plugin, Printer } from "prettier";
 
-import { stringify } from "@augment-vir/common";
-import { createWrappedMultiTargetProxy } from "proxy-vir";
-import { assert, not, objectHasIn } from "ts-extras";
+import { assert, not, objectHasIn, safeCastTo } from "ts-extras";
 
+import { stringify } from "./augments/string.js";
 import { pluginMarker } from "./plugin-marker.js";
 import { createMultilineArrayPrinter } from "./printer/multiline-array-printer.js";
 import { setOriginalPrinter } from "./printer/original-printer.js";
@@ -136,15 +135,24 @@ function findPluginsByParserName(
     });
 }
 
-export function wrapParser(originalParser: Parser, parserName: string): Parser {
-    /**
-     * Create a multi-target proxy of parsers so that we don't block other
-     * plugins.
-     */
-    const parserProxy = createWrappedMultiTargetProxy<Parser>({
-        initialTarget: originalParser,
-    });
+function findSortJsonParser(
+    parserName: string,
+    plugins: (
+        | Plugin
+        | string
+        | URL
+    )[]
+): Parser | undefined {
+    return findPluginsByParserName(parserName, plugins).find((plugin) =>
+        safeCastTo<
+            Plugin & {
+                name?: string | undefined;
+            }
+        >(plugin).name?.includes("prettier-plugin-sort-json")
+    )?.parsers?.[parserName];
+}
 
+export function wrapParser(originalParser: Parser, parserName: string): Parser {
     async function multilineArraysPluginPreprocess(
         text: string,
         options: ActualParserOptions
@@ -154,17 +162,6 @@ export function wrapParser(originalParser: Parser, parserName: string): Parser {
             parserName,
             pluginsFromOptions
         );
-        for (const plugin of pluginsWithRelevantParsers) {
-            const currentParser = plugin.parsers?.[parserName];
-            if (
-                currentParser &&
-                (
-                    plugin as undefined | { name?: string | undefined }
-                )?.name?.includes("prettier-plugin-sort-json")
-            ) {
-                parserProxy.proxyModifier.addOverrideTarget(currentParser);
-            }
-        }
 
         const pluginsWithPreprocessor = pluginsWithRelevantParsers.filter(
             (plugin) => Boolean(plugin.parsers?.[parserName]?.preprocess)
@@ -193,9 +190,15 @@ export function wrapParser(originalParser: Parser, parserName: string): Parser {
         return processedText;
     }
 
-    parserProxy.proxyModifier.addOverrideTarget({
-        preprocess: multilineArraysPluginPreprocess,
-    });
+    return {
+        ...originalParser,
+        parse(text, options) {
+            const parser =
+                findSortJsonParser(parserName, options.plugins) ??
+                originalParser;
 
-    return parserProxy.proxy;
+            return parser.parse(text, options);
+        },
+        preprocess: multilineArraysPluginPreprocess,
+    };
 }

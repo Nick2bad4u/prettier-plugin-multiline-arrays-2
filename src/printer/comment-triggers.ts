@@ -1,11 +1,11 @@
 import type { Comment, Node } from "estree";
 
-import { check } from "@augment-vir/assert";
-import { getObjectTypedKeys } from "@augment-vir/common";
 import {
     arrayFirst,
     arrayJoin,
     isEmpty,
+    objectHasIn,
+    objectKeys,
     safeCastTo,
     setHas,
     stringSplit,
@@ -42,7 +42,7 @@ type InternalCommentTriggers = CommentTriggers & {
 
 const mappedCommentTriggers = new WeakMap<Node, CommentTriggers>();
 
-const ignoredAstChildKeys = new Set([
+const ignoredAstChildKeys: ReadonlySet<string> = new Set([
     "comments",
     "leadingComments",
     "loc",
@@ -192,7 +192,7 @@ function mapNextLineTriggers<T>({
 }>): LineNumberDetails<T> {
     const mappedTriggers: LineNumberDetails<T> = {};
 
-    for (const triggerLineNumber of getObjectTypedKeys(triggers)) {
+    for (const triggerLineNumber of objectKeys(triggers)) {
         const trigger = triggers[triggerLineNumber];
         const targetLineNumber = findArrayLikeTargetLine({
             nextLineNumber: Number(triggerLineNumber) + 1,
@@ -274,7 +274,7 @@ function collectAstNodes({
     shouldWalkChildren?:
         ((node: Node, isRootNode: boolean) => boolean) | undefined;
 }>): Node[] {
-    if (check.isArray(input)) {
+    if (Array.isArray(input)) {
         return input.flatMap((child) =>
             collectAstNodes({
                 input: child,
@@ -286,7 +286,7 @@ function collectAstNodes({
         );
     }
 
-    if (!check.isObject(input) || seenInputs.has(input)) {
+    if (typeof input !== "object" || input === null || seenInputs.has(input)) {
         return [];
     }
 
@@ -298,8 +298,8 @@ function collectAstNodes({
 
     const matchingNode = shouldInclude(input, isRootNode) ? [input] : [];
     const childNodes = shouldWalkChildren(input, isRootNode)
-        ? getObjectTypedKeys(input).flatMap((nodeKey) => {
-              if (setHas(ignoredAstChildKeys, String(nodeKey))) {
+        ? objectKeys(input).flatMap((nodeKey) => {
+              if (setHas<string, string>(ignoredAstChildKeys, nodeKey)) {
                   return [];
               }
 
@@ -317,7 +317,7 @@ function collectAstNodes({
 }
 
 function isAstNode(input: object): input is Node {
-    return check.isObject(input) && check.isString(input.type);
+    return objectHasIn(input, "type") && typeof input.type === "string";
 }
 
 function isIntegerString(entry: string): boolean {
@@ -339,7 +339,7 @@ function setResets(internalCommentTriggers: InternalCommentTriggers): void {
         return;
     }
 
-    const setLineCountLineNumbers = getObjectTypedKeys(
+    const setLineCountLineNumbers = objectKeys(
         internalCommentTriggers.setLineCounts
     );
     if (setLineCountLineNumbers.length > 0) {

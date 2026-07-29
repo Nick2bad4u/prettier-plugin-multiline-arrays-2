@@ -1,9 +1,8 @@
 import type { Node } from "estree";
 import type { AstPath, ParserOptions, Printer } from "prettier";
 
-import { assertWrap } from "@augment-vir/assert";
 import estreePluginModule from "prettier/plugins/estree";
-import { safeCastTo } from "ts-extras";
+import { assertDefined, safeCastTo } from "ts-extras";
 
 import {
     envDebugKey,
@@ -97,9 +96,12 @@ export function createMultilineArrayPrinter(
     };
 }
 
-export const multilineArrayPrinter: Printer<Node> = createMultilineArrayPrinter(
-    assertWrap.isDefined(
-        estreePlugin.printers.estree,
-        "No ESTree printer found."
-    )
-);
+function getEstreePrinter(): Printer<Node> {
+    const estreePrinter = estreePlugin.printers.estree;
+    assertDefined(estreePrinter, "No ESTree printer found.");
+
+    return estreePrinter;
+}
+
+export const multilineArrayPrinter: Printer<Node> =
+    createMultilineArrayPrinter(getEstreePrinter());

@@ -20,7 +20,6 @@ const prettierAstBoundaryFiles = [
     "src/preprocessing.ts",
     "src/printer/**/*.ts",
     "test/prettier-config.ts",
-    "test/prettier-versions.mock.script.ts",
     "test/run-tests.mock.ts",
 ];
 
@@ -81,6 +80,16 @@ const config = [
         ]),
     },
     {
+        files: ["test/prettier-compatibility-consumer.ts"],
+        name: "Prettier compatibility dynamic consumer imports",
+        rules: turnOffRules(["no-unsanitized/method"]),
+    },
+    {
+        files: ["test/prettier-compatibility.script.ts"],
+        name: "Prettier compatibility process environment",
+        rules: turnOffRules(["n/no-process-env"]),
+    },
+    {
         files: ["src/index.ts"],
         name: "Package entrypoint exports",
         rules: turnOffRules([
@@ -122,11 +131,7 @@ const config = [
         ]),
     },
     {
-        files: [
-            "src/augments/doc.ts",
-            "src/printer/**/*.ts",
-            "test/prettier-versions.mock.script.ts",
-        ],
+        files: ["src/augments/doc.ts", "src/printer/**/*.ts"],
         name: "Existing boolean terminology",
         rules: turnOffRules(["unicorn/consistent-boolean-name"]),
     },

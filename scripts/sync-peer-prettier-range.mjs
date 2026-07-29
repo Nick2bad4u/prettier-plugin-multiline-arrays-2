@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const packageJsonPath = fileURLToPath(
     new URL("../package.json", import.meta.url)
 );
-const minimumSupportedPrettierRange = "^3.0.0";
+const minimumSupportedPrettierRange = "^3.9.0";
 
 function isRecord(value) {
     return typeof value === "object" && value !== null;

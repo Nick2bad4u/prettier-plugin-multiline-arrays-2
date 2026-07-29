@@ -79,4 +79,4 @@ npm test
 npm run release:check
 ```
 
-The test suite runs with Vitest coverage and includes a `test:prettier-latest` check to verify compatibility with the current npm `latest` Prettier release.
+The test suite runs with Vitest coverage. Release verification also packs the plugin and tests it in isolated consumer projects against both the exact minimum supported Prettier version and the newest published version allowed by the peer range.

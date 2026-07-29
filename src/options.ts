@@ -1,5 +1,4 @@
-import { getObjectTypedKeys, type Values } from "@augment-vir/common";
-import { objectHasIn, safeCastTo, stringSplit } from "ts-extras";
+import { objectHasIn, objectKeys, safeCastTo, stringSplit } from "ts-extras";
 
 export const envDebugKey = "MULTILINE_DEBUG";
 
@@ -106,7 +105,7 @@ export type MultilinePrettierOptionType =
     | "string";
 
 export function getPrettierOptionType(
-    input: Values<MultilineArrayOptions>
+    input: number | string
 ): MultilinePrettierOptionType {
     const mappedType = optionTypeToPrettierOptionTypeMapping[typeof input];
 
@@ -126,7 +125,7 @@ export function fillInOptions<T extends object>(
     const newOptions: MultilineArrayOptions & T = {
         ...input,
     } as MultilineArrayOptions & T;
-    for (const optionsKey of getObjectTypedKeys(defaultMultilineArrayOptions)) {
+    for (const optionsKey of objectKeys(defaultMultilineArrayOptions)) {
         const inputValue: unknown = objectHasIn(input, optionsKey)
             ? input[optionsKey]
             : undefined;

@@ -1,10 +1,4 @@
-import { check } from "@augment-vir/assert";
-import {
-    omitObjectKeys,
-    type PartialWithNullable,
-    removeColor,
-    removeNullishValues,
-} from "@augment-vir/common";
+import { stripVTControlCharacters } from "node:util";
 import * as prettier from "prettier";
 import { objectHasIn } from "ts-extras";
 import { expect, it } from "vitest";
@@ -14,6 +8,12 @@ import type { MultilineArrayOptions } from "../src/options.js";
 import { repoConfig } from "./prettier-config.js";
 
 type PrettierOptions = prettier.Options;
+type PartialWithNullable<T extends object> = {
+    [Property in keyof T]?:
+        | null
+        | T[Property]
+        | undefined;
+};
 
 async function runPrettierFormat({
     code,
@@ -33,10 +33,11 @@ async function runPrettierFormat({
         ? extension.slice(1)
         : extension;
 
+    const { filepath, ...optionsWithoutFilepath } = options;
     const filepathOptions: Partial<Pick<PrettierOptions, "filepath">> =
-        check.isString(options.filepath)
+        typeof filepath === "string"
             ? {
-                  filepath: options.filepath,
+                  filepath,
               }
             : objectHasIn(options, "filepath")
               ? {}
@@ -46,7 +47,11 @@ async function runPrettierFormat({
 
     const prettierOptions: PrettierOptions = {
         ...repoConfig,
-        ...removeNullishValues(omitObjectKeys(options, ["filepath"])),
+        ...Object.fromEntries(
+            Object.entries(optionsWithoutFilepath).filter(
+                ([_key, value]) => value != undefined
+            )
+        ),
         ...filepathOptions,
         ...(parser && {
             parser,
@@ -134,13 +139,15 @@ export function runTests({
                 expect(formatted).toBe(expected);
             } catch (error) {
                 if (test.failureMessage && error instanceof Error) {
-                    const strippedMessage = removeColor(error.message);
+                    const strippedMessage = stripVTControlCharacters(
+                        error.message
+                    );
                     if (test.failureMessage !== strippedMessage) {
                         console.info({
                             strippedMessage,
                         });
                     }
-                    expect(removeColor(strippedMessage)).toBe(
+                    expect(stripVTControlCharacters(strippedMessage)).toBe(
                         test.failureMessage
                     );
                 } else {

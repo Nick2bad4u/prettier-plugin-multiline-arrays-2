@@ -1,8 +1,3 @@
-import {
-    getObjectTypedKeys,
-    stringify,
-    type Values,
-} from "@augment-vir/common";
 import * as prettier from "prettier";
 import {
     arrayFirst,
@@ -12,6 +7,7 @@ import {
     assertDefined,
     isEmpty,
     objectHasIn,
+    objectKeys,
     safeCastTo,
     stringSplit,
 } from "ts-extras";
@@ -19,12 +15,9 @@ import {
 import type { MultilineArrayOptions } from "../options.js";
 
 import { isDocCommand } from "../augments/doc.js";
+import { stringify } from "../augments/string.js";
 import { walkDoc } from "./child-docs.js";
-import {
-    type CommentTriggerWithEnding,
-    getCommentTriggers,
-    parseNextLineCounts,
-} from "./comment-triggers.js";
+import { getCommentTriggers, parseNextLineCounts } from "./comment-triggers.js";
 import { containsLeadingNewline } from "./leading-new-line.js";
 import {
     getArrayLikeElements,
@@ -719,12 +712,12 @@ export function insertLinesIntoArray({
     return inputDoc;
 }
 
-function getLatestSetValue<T extends object>(
+function getLatestSetValue<T>(
     currentLine: number,
-    triggers: CommentTriggerWithEnding<T>
-): undefined | Values<T> {
-    let relevantSetLineCountsKey = "" as keyof T;
-    const sortedTriggerKeys = getObjectTypedKeys(triggers).toSorted(
+    triggers: Readonly<Record<string, { data: T; lineEnd: number }>>
+): T | undefined {
+    let relevantTrigger: undefined | { data: T; lineEnd: number };
+    const sortedTriggerKeys = objectKeys(triggers).toSorted(
         (firstKey, secondKey) => Number(firstKey) - Number(secondKey)
     );
 
@@ -733,18 +726,13 @@ function getLatestSetValue<T extends object>(
             continue;
         }
 
-        const currentData = safeCastTo<
-            CommentTriggerWithEnding<T>[keyof T] | undefined
-        >(triggers[currentKey]);
+        const currentData = triggers[currentKey];
 
         if (currentData && currentData.lineEnd > currentLine) {
-            relevantSetLineCountsKey = currentKey;
+            relevantTrigger = currentData;
         }
     }
 
-    const relevantTrigger = safeCastTo<
-        CommentTriggerWithEnding<T>[keyof T] | undefined
-    >(triggers[relevantSetLineCountsKey]);
     return relevantTrigger?.data;
 }
 
