@@ -43,11 +43,14 @@ export function filterInheritedNpmPolicyEnvironment(
 }
 
 export function getPackedFilename(packMetadata: unknown): string {
-    const records = Array.isArray(packMetadata)
-        ? packMetadata
-        : isRecord(packMetadata)
-          ? Object.values(packMetadata)
-          : [];
+    let records: unknown[];
+    if (Array.isArray(packMetadata)) {
+        records = packMetadata;
+    } else if (isRecord(packMetadata)) {
+        records = Object.values(packMetadata);
+    } else {
+        records = [];
+    }
 
     if (records.length !== 1) {
         throw new Error(

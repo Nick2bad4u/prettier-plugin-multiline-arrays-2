@@ -39,6 +39,8 @@
 **/build/
 **/dist/
 **/generated/
+**/reports/
+.lychee.report.md
 
 # API reference files (if auto-generated)
 **/api-reference/

@@ -47,7 +47,6 @@ jobs:
                       codecov_flag: "os-macos"
         env:
             CI: "true"
-            CODECOV_TOKEN: "${{ secrets.CODECOV_TOKEN }}"
         defaults:
             run:
                 shell: "bash"
@@ -70,7 +69,7 @@ jobs:
             - name: "Setup npm"
               working-directory: "${{ runner.temp }}"
               run: |
-                  npm install --global --ignore-scripts npm@12.0.1
+                  npm install --global --ignore-scripts npm@12.0.2
                   npm --version
 
             - name: "Install dependencies"
@@ -86,14 +85,14 @@ jobs:
               run: "npm test --if-present"
 
             - name: "Upload coverage to Codecov"
-              if: "${{ !cancelled() && matrix.os == 'ubuntu-latest' && env.CODECOV_TOKEN != '' }}"
+              if: "${{ !cancelled() && matrix.os == 'ubuntu-latest' }}"
               uses: "codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f" # v7.0.0
               with:
                   use_oidc: true
                   slug: "${{ github.repository }}"
                   flags: "${{ matrix.codecov_flag }}"
                   name: "coverage-${{ matrix.codecov_flag }}"
-                  fail_ci_if_error: false
+                  fail_ci_if_error: true
 
     release-verify:
         name: "Release verification"
@@ -119,7 +118,7 @@ jobs:
             - name: "Setup npm"
               working-directory: "${{ runner.temp }}"
               run: |
-                  npm install --global --ignore-scripts npm@12.0.1
+                  npm install --global --ignore-scripts npm@12.0.2
                   npm --version
 
             - name: "Install dependencies"

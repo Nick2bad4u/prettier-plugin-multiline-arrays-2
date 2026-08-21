@@ -54,5 +54,6 @@ The package is configured for npm provenance:
 }
 ```
 
-Trusted publishing should point at `.github/workflows/npm-release.yml`, which
-calls the shared reusable npm release workflow with OIDC permissions enabled.
+Trusted publishing should point at `.github/workflows/npm-release.yml`. The
+inline release workflow uses npm trusted publishing with OIDC permissions and
+publishes provenance for the generated package.
