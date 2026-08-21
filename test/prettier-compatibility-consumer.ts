@@ -155,6 +155,39 @@ export async function verifyPrettierConsumer({
         );
     }
 
+    const rangeInput = 'const untouched={a:1};\nconst values=["a","b","c"];\n';
+    const rangeExpected = `const untouched={a:1};
+const values = [
+    "a",
+    "b",
+    "c",
+];
+`;
+    const rangeOptions: Readonly<Record<string, unknown>> = {
+        multilineArraysWrapThreshold: 2,
+        parser: "babel",
+        plugins: [pluginModule],
+        rangeStart: rangeInput.indexOf("const values"),
+        rangeEnd: rangeInput.length,
+        tabWidth: 4,
+    };
+    const rangeFormatted = await format(
+        prettierModule,
+        rangeInput,
+        rangeOptions
+    );
+
+    assert.equal(rangeFormatted, rangeExpected, "Range formatting failed.");
+    assert.equal(
+        await format(prettierModule, rangeFormatted, {
+            ...rangeOptions,
+            rangeStart: rangeFormatted.indexOf("const values"),
+            rangeEnd: rangeFormatted.length,
+        }),
+        rangeExpected,
+        "Range formatting is not idempotent."
+    );
+
     process.stdout.write(
         `Verified ${packageName}@${expectedPackageVersion} with Prettier ${expectedPrettierVersion}.\n`
     );
