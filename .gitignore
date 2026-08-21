@@ -11,6 +11,7 @@ dist/
 generated-config-*
 graphics/
 node_modules/
+reports/
 tsconfig.tsbuildinfo
 .lychee.report.md
 .lycheecache
