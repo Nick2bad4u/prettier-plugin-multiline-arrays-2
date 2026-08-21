@@ -85,9 +85,7 @@ export const defaultOptions: Partial<RequiredOptions> &
     ...defaultMultilineArrayOptions,
 };
 
-/*
- * Augment Prettier's `Options` interface with multiline array options.
- */
+/* Augment Prettier's `Options` interface with multiline array options. */
 declare module "prettier" {
     // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- module augmentation requires extends
     interface Options extends Partial<MultilineArrayOptions> {}
