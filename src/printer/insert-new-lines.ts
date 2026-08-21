@@ -211,6 +211,18 @@ export function insertLinesIntoArray({
                     !isDocCommand(startingLine) ||
                     startingLine.type !== "line"
                 ) {
+                    /**
+                     * Range formatting can make Prettier invoke this printer
+                     * twice with the same Doc. The first pass replaces the
+                     * opening softline with an empty string below, so treat
+                     * that exact sentinel as an already-processed array.
+                     */
+                    if (startingLine === "") {
+                        undoAllMutations();
+                        hasProcessedOwnArray = true;
+                        return false;
+                    }
+
                     if (Array.isArray(startingLine)) {
                         undoAllMutations();
                         return false;
